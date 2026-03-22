@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Prezzi Carburante Reale</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #f3f4f6;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    #app-container {
+      position: relative;
+      height: calc(100vh - 64px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    #map {
+      flex: 1;
+      width: 100%;
+      z-index: 10;
+    }
+
+    #top-bar {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      z-index: 1000;
+      background: white;
+      border-radius: 24px;
+      padding: 12px 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .icon-btn {
+      border: none;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    #filter-panel {
+      position: absolute;
+      z-index: 1200;
+      top: 72px;
+      left: 12px;
+      right: 12px;
+      background: white;
+      border-radius: 20px;
+      padding: 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.16);
+      display: none;
+    }
+
+    #filter-panel.open {
+      display: block;
+    }
+
+    #locate-btn {
+      position: absolute;
+      right: 16px;
+      bottom: 90px;
+      z-index: 1000;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      border: none;
+      background: #4f46e5;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+    }
+
+    #loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.88);
+      z-index: 2000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+
+    #sheet {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 64px;
+      z-index: 1100;
+      background: white;
+      border-radius: 20px 20px 0 0;
+      box-shadow: 0 -8px 24px rgba(0,0,0,0.14);
+      max-height: 58vh;
+      transform: translateY(calc(100% - 56px));
+      transition: transform 0.24s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #sheet.expanded {
+      transform: translateY(0);
+    }
+
+    #sheet-handle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    #sheet-handle-bar {
+      width: 44px;
+      height: 5px;
+      background: #d1d5db;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+
+    #sheet-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 16px 8px;
+    }
+
+    #station-list {
+      overflow: auto;
+      padding: 0 12px 14px;
+    }
+
+    .station-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+      background: #fff;
+    }
+
+    .station-brand {
+      font-size: 13px;
+      font-weight: 800;
+      color: #111827;
+      text-transform: uppercase;
+    }
+
+    .station-name {
+      font-size: 13px;
+      color: #374151;
+      margin-top: 2px;
+    }
+
+    .station-meta {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    .station-price {
+      font-size: 18px;
+      font-weight: 800;
+      color: #111827;
+      white-space: nowrap;
+    }
+
+    .station-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+
+    .badge-low { background: #dcfce7; color: #166534; }
+    .badge-mid { background: #ffedd5; color: #9a3412; }
+    .badge-high { background: #fee2e2; color: #991b1b; }
+
+    #empty-state {
+      text-align: center;
+      color: #6b7280;
+      padding: 22px 14px;
+      font-size: 14px;
+    }
+
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: 140px;
+      transform: translate(-50%, 90px);
+      opacity: 0;
+      transition: all .25s ease;
+      background: #111827;
+      color: white;
+      padding: 10px 14px;
+      border-radius: 12px;
+      z-index: 3000;
+      font-size: 14px;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.2);
+      text-align: center;
+      max-width: 86vw;
+    }
+
+    #debug-panel {
+      position: fixed;
+      top: 72px;
+      left: 12px;
+      right: 12px;
+      z-index: 1600;
+      background: rgba(17,24,39,0.96);
+      color: #e5e7eb;
+      border-radius: 18px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.28);
+      overflow: hidden;
+      display: none;
+      max-height: 58vh;
+    }
+
+    #debug-panel.open {
+      display: flex;
+      flex-direction: column;
+    }
+
+    #debug-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    #debug-status-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 12px 14px 4px;
+      font-size: 12px;
+    }
+
+    .debug-stat {
+      background: rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 8px 10px;
+    }
+
+    .debug-stat-label {
+      color: #9ca3af;
+      font-size: 11px;
+      margin-bottom: 3px;
+    }
+
+    .debug-stat-value {
+      color: #f9fafb;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    #debug-toolbar {
+      display: flex;
+      gap: 8px;
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      flex-wrap: wrap;
+    }
+
+    .debug-btn {
+      border: none;
+      border-radius: 10px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #374151;
+      color: white;
+    }
+
+    .debug-btn.green { background: #065f46; }
+    .debug-btn.blue { background: #1d4ed8; }
+    .debug-btn.red { background: #991b1b; }
+
+    #debug-log {
+      overflow: auto;
+      padding: 10px 14px 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .debug-line {
+      padding: 6px 0;
+      border-bottom: 1px dashed rgba(255,255,255,0.08);
+    }
+
+    .debug-time { color: #93c5fd; }
+    .debug-level-info { color: #cbd5e1; }
+    .debug-level-ok { color: #86efac; }
+    .debug-level-warn { color: #fde68a; }
+    .debug-level-error { color: #fca5a5; }
+
+    .mimit-marker {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.3));
+    }
+
+    .mimit-price {
+      color: white;
+      font-weight: 800;
+      padding: 3px 6px;
+      border-radius: 6px 6px 0 0;
+      font-size: 13px;
+      width: 58px;
+      text-align: center;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .mimit-brand {
+      background: white;
+      padding: 3px 2px;
+      border-radius: 0 0 6px 6px;
+      width: 58px;
+      text-align: center;
+      font-size: 10px;
+      font-weight: 800;
+      color: #1f2937;
+      border: 1px solid #d1d5db;
+      border-top: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .mimit-triangle {
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 8px solid #d1d5db;
+      position: relative;
+      top: -1px;
+    }
+
+    .mimit-triangle::after {
+      content: '';
+      position: absolute;
+      top: -9px;
+      left: -5px;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 7px solid white;
+    }
+
+    .bg-low { background-color: #16a34a; }
+    .bg-medium { background-color: #ea580c; }
+    .bg-high { background-color: #dc2626; }
+
+    #region-avg-bar {
+      background: #60a5fa;
+      color: white;
+      text-align: center;
+      padding: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      z-index: 1000;
+    }
+
+    .bottom-nav-btn {
+      border: none;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      color: #9ca3af;
+      cursor: pointer;
+    }
+
+    .bottom-nav-btn.active {
+      color: #4338ca;
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <div id="loading-overlay">
+      <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-indigo-600 mb-4"></i>
+      <div id="loading-text" class="text-gray-700 font-semibold text-center px-4">
+        Avvio app...<br><small class="text-gray-500 font-normal">Preparazione dati</small>
+      </div>
+    </div>
+
+    <div id="top-bar">
+      <button id="menu-btn" class="icon-btn" type="button"><i data-lucide="menu" class="text-gray-700"></i></button>
+      <div class="flex-1 min-w-0">
+        <div class="text-[15px] text-gray-800 font-semibold">Prezzi carburante</div>
+        <div id="top-subtitle" class="text-[12px] text-gray-400 truncate">Mappa distributori vicini</div>
+      </div>
+      <button id="filter-btn" class="icon-btn" type="button"><i data-lucide="filter" class="text-gray-700"></i></button>
+    </div>
+
+    <div id="filter-panel">
+      <div class="grid grid-cols-2 gap-3">
+        <label class="block">
+          <span class="text-xs font-semibold text-gray-700">Carburante</span>
+          <select id="fuel-select" class="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm">
+            <option value="Benzina">Benzina</option>
+            <option value="Gasolio">Gasolio</option>
+          </select>
+        </label>
+
+        <label class="block">
+          <span class="text-xs font-semibold text-gray-700">Raggio</span>
+          <select id="radius-select" class="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm">
+            <option value="3">3 km</option>
+            <option value="5" selected>5 km</option>
+            <option value="10">10 km</option>
+            <option value="15">15 km</option>
+            <option value="20">20 km</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 mt-3">
+        <label class="block">
+          <span class="text-xs font-semibold text-gray-700">Ordina</span>
+          <select id="sort-select" class="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm">
+            <option value="price-asc" selected>Prezzo crescente</option>
+            <option value="distance-asc">Distanza crescente</option>
+            <option value="price-desc">Prezzo decrescente</option>
+          </select>
+        </label>
+
+        <div class="flex items-end">
+          <button id="apply-filters-btn" class="w-full rounded-xl bg-indigo-600 text-white py-2.5 text-sm font-semibold" type="button">Aggiorna</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="map"></div>
+
+    <button id="locate-btn" type="button">
+      <i data-lucide="crosshair" class="w-6 h-6"></i>
+    </button>
+
+    <div id="region-avg-bar">
+      Media nella zona: <span id="avg-price">--</span> €/l
+    </div>
+  </div>
+
+  <div id="sheet">
+    <div id="sheet-handle">
+      <div id="sheet-handle-bar"></div>
+      <div class="text-xs font-semibold text-gray-500">Elenco distributori</div>
+    </div>
+
+    <div id="sheet-header">
+      <div>
+        <div id="sheet-title" class="text-sm font-bold text-gray-900">Distributori nel raggio</div>
+        <div id="sheet-subtitle" class="text-xs text-gray-500">Ordine per prezzo</div>
+      </div>
+      <button id="open-cheapest-route-btn" type="button" class="rounded-xl bg-emerald-600 text-white px-3 py-2 text-xs font-semibold">Vai al più economico</button>
+    </div>
+
+    <div id="station-list"></div>
+  </div>
+
+  <nav class="bg-white h-16 w-full fixed bottom-0 flex justify-around items-center border-t border-gray-200 z-50">
+    <button id="nav-home" class="bottom-nav-btn" type="button">
+      <i data-lucide="tag" class="w-6 h-6 mb-1"></i>
+      <span class="text-[10px] font-medium">Home</span>
+    </button>
+    <button id="nav-favorites" class="bottom-nav-btn" type="button">
+      <i data-lucide="heart" class="w-6 h-6 mb-1"></i>
+      <span class="text-[10px] font-medium">Preferiti</span>
+    </button>
+    <button id="nav-map" class="bottom-nav-btn active" type="button">
+      <div class="bg-indigo-100 p-1.5 rounded-xl mb-0.5"><i data-lucide="map" class="w-6 h-6"></i></div>
+      <span class="text-[10px] font-bold">Mappa</span>
+    </button>
+    <button id="nav-nearby" class="bottom-nav-btn" type="button">
+      <i data-lucide="navigation" class="w-6 h-6 mb-1"></i>
+      <span class="text-[10px] font-medium">Vicini</span>
+    </button>
+    <button id="nav-economical" class="bottom-nav-btn" type="button">
+      <i data-lucide="badge-euro" class="w-6 h-6 mb-1"></i>
+      <span class="text-[10px] font-medium">Economici</span>
+    </button>
+  </nav>
+
+  <div id="debug-panel">
+    <div id="debug-header">
+      <div>
+        <div class="text-sm font-bold text-white">Debug live</div>
+        <div class="text-[11px] text-gray-400">Fonte MIMIT: snapshot giornaliero, non live al secondo</div>
+      </div>
+      <button id="debug-close-btn" class="debug-btn" type="button">Chiudi</button>
+    </div>
+
+    <div id="debug-status-grid">
+      <div class="debug-stat"><div class="debug-stat-label">Fonte dati</div><div id="debug-source" class="debug-stat-value">--</div></div>
+      <div class="debug-stat"><div class="debug-stat-label">Ultimo refresh</div><div id="debug-refresh" class="debug-stat-value">--</div></div>
+      <div class="debug-stat"><div class="debug-stat-label">GPS</div><div id="debug-gps" class="debug-stat-value">--</div></div>
+      <div class="debug-stat"><div class="debug-stat-label">Filtri</div><div id="debug-filters" class="debug-stat-value">--</div></div>
+      <div class="debug-stat"><div class="debug-stat-label">Risultati</div><div id="debug-results" class="debug-stat-value">--</div></div>
+      <div class="debug-stat"><div class="debug-stat-label">Ultimo errore</div><div id="debug-error" class="debug-stat-value">Nessuno</div></div>
+    </div>
+
+    <div id="debug-toolbar">
+      <button id="debug-refresh-btn" class="debug-btn green" type="button">Refresh dati</button>
+      <button id="debug-copy-btn" class="debug-btn blue" type="button">Copia log</button>
+      <button id="debug-download-btn" class="debug-btn blue" type="button">Scarica log</button>
+      <button id="debug-clear-btn" class="debug-btn red" type="button">Pulisci</button>
+    </div>
+
+    <div id="debug-log"></div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    lucide.createIcons();
+
+    const map = L.map('map', { zoomControl: false }).setView([44.8381, 11.6198], 12);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+    }).addTo(map);
+
+    const MIMIT_ANAGRAFICA = 'https://www.mimit.gov.it/images/exportCSV/anagrafica_impianti_attivi.csv';
+    const MIMIT_PREZZI = 'https://www.mimit.gov.it/images/exportCSV/prezzo_alle_8.csv';
+    const CORS_PROXIES = [
+      { name: 'direct', buildUrl: (url) => url },
+      { name: 'corsproxy.io', buildUrl: (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}` },
+      { name: 'allorigins', buildUrl: (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}` }
+    ];
+    const CSV_DELIMITER = '|';
+    const MAX_DEBUG_LINES = 250;
+
+    const state = {
+      fuel: 'Benzina',
+      radiusKm: 5,
+      sortBy: 'price-asc',
+      userLat: 44.8381,
+      userLng: 11.6198,
+      stationMarkers: [],
+      userMarker: null,
+      stations: [],
+      filteredStations: [],
+      favoriteIds: new Set(JSON.parse(localStorage.getItem('fuel-favorites') || '[]')),
+      filterPanelOpen: false,
+      sheetExpanded: false,
+      loadingGps: false,
+      debugVisible: true,
+      debugLines: [],
+      dataSource: 'inizializzazione',
+      lastRefreshAt: null,
+      lastError: '',
+      gpsStatus: 'non richiesto',
+      lastCounts: {
+        anagraficaRows: 0,
+        nearbyStations: 0,
+        prezziRows: 0,
+        results: 0
+      }
+    };
+
+    function $(id) {
+      return document.getElementById(id);
+    }
+
+    function nowTime() {
+      return new Date().toLocaleTimeString('it-IT', { hour12: false });
+    }
+
+    function stringifyData(data) {
+      if (data === undefined || data === null) return '';
+      if (typeof data === 'string') return data;
+      try {
+        return JSON.stringify(data);
+      } catch {
+        return String(data);
+      }
+    }
+
+    function safeConsole(level, ...args) {
+      try {
+        if (level === 'warn') {
+          console.warn(...args);
+        } else {
+          console.log(...args);
+        }
+      } catch {
+        // ignore preview console issues
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function labelSort(value) {
+      if (value === 'price-asc') return 'ordinati per prezzo crescente';
+      if (value === 'price-desc') return 'ordinati per prezzo decrescente';
+      return 'ordinati per distanza';
+    }
+
+    function renderDebugLog() {
+      const panel = $('debug-panel');
+      if (!panel) return;
+      panel.classList.toggle('open', state.debugVisible);
+
+      $('debug-source').textContent = state.dataSource;
+      $('debug-refresh').textContent = state.lastRefreshAt ? new Date(state.lastRefreshAt).toLocaleString('it-IT') : '--';
+      $('debug-gps').textContent = state.gpsStatus;
+      $('debug-filters').textContent = `${state.fuel} · ${state.radiusKm} km · ${labelSort(state.sortBy)}`;
+      $('debug-results').textContent = `${state.filteredStations.length} visibili · raw ${state.lastCounts.results} · vicini ${state.lastCounts.nearbyStations}`;
+      $('debug-error').textContent = state.lastError || 'Nessuno';
+
+      const container = $('debug-log');
+      container.innerHTML = state.debugLines.map((line) => {
+        const levelClass = line.level === 'error'
+          ? 'debug-level-error'
+          : line.level === 'warn'
+            ? 'debug-level-warn'
+            : line.level === 'ok'
+              ? 'debug-level-ok'
+              : 'debug-level-info';
+        const body = line.data ? `<br>${escapeHtml(line.data)}` : '';
+        return `<div class="debug-line"><span class="debug-time">[${line.ts}]</span> <span class="${levelClass}">${line.level.toUpperCase()}</span> ${escapeHtml(line.message)}${body}</div>`;
+      }).join('');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function logDebug(level, message, data) {
+      const line = {
+        ts: nowTime(),
+        level,
+        message,
+        data: stringifyData(data)
+      };
+      state.debugLines.push(line);
+      if (state.debugLines.length > MAX_DEBUG_LINES) state.debugLines.shift();
+      if (level === 'error') {
+        state.lastError = `${message}${line.data ? ' · ' + line.data : ''}`;
+      }
+      renderDebugLog();
+      safeConsole(level, '[fuel-debug]', message, data || '');
+    }
+
+    function showLoading(html) {
+      $('loading-text').innerHTML = html;
+      $('loading-overlay').style.display = 'flex';
+      logDebug('info', 'Overlay loading aperto', html.replace(/<br>/g, ' ').replace(/<[^>]+>/g, ''));
+    }
+
+    function hideLoading() {
+      $('loading-overlay').style.display = 'none';
+      logDebug('info', 'Overlay loading chiuso');
+    }
+
+    let toastTimer;
+    function showToast(message) {
+      const toast = $('toast');
+      toast.textContent = message;
+      toast.style.transform = 'translate(-50%, 0)';
+      toast.style.opacity = '1';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.style.transform = 'translate(-50%, 90px)';
+        toast.style.opacity = '0';
+      }, 2400);
+      logDebug('info', 'Toast', message);
+    }
+
+    function calcDistance(lat1, lon1, lat2, lon2) {
+      const p = 0.017453292519943295;
+      const c = Math.cos;
+      const a = 0.5 - c((lat2 - lat1) * p) / 2 + c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p)) / 2;
+      return 12742 * Math.asin(Math.sqrt(a));
+    }
+
+    function getMarkerColor(price, avg) {
+      if (!avg || Number.isNaN(avg)) return 'bg-medium';
+      if (price <= avg - 0.03) return 'bg-low';
+      if (price >= avg + 0.03) return 'bg-high';
+      return 'bg-medium';
+    }
+
+    function getBadgeClass(price, avg) {
+      if (!avg || Number.isNaN(avg)) return 'badge-mid';
+      if (price <= avg - 0.03) return 'badge-low';
+      if (price >= avg + 0.03) return 'badge-high';
+      return 'badge-mid';
+    }
+
+    function getBadgeText(price, avg) {
+      if (!avg || Number.isNaN(avg)) return 'Nella media';
+      if (price <= avg - 0.03) return 'Conveniente';
+      if (price >= avg + 0.03) return 'Più caro';
+      return 'Nella media';
+    }
+
+    function safeCsvParse(text, kind) {
+      const cleaned = String(text || '').replace(/^\uFEFF/, '').split('\n').slice(1).join('\n');
+      const parsed = Papa.parse(cleaned, {
+        header: true,
+        delimiter: CSV_DELIMITER,
+        skipEmptyLines: true,
+        transformHeader: (h) => (h || '').trim().replace(/^\uFEFF/, '')
+      }).data;
+      logDebug('ok', `CSV parsato: ${kind}`, { righe: parsed.length });
+      return parsed;
+    }
+
+    async function fetchViaProxy(url) {
+      let lastError = null;
+
+      for (const proxy of CORS_PROXIES) {
+        const requestUrl = proxy.buildUrl(url);
+        const t0 = performance.now();
+
+        try {
+          logDebug('info', 'Fetch avviato', { targetUrl: url, mode: proxy.name, requestUrl });
+          const res = await fetch(requestUrl, { cache: 'no-store' });
+          const ms = Math.round(performance.now() - t0);
+          logDebug(res.ok ? 'ok' : 'warn', 'Fetch completato', { targetUrl: url, mode: proxy.name, status: res.status, ms });
+
+          if (!res.ok) {
+            lastError = new Error(`HTTP ${res.status} via ${proxy.name}`);
+            continue;
+          }
+
+          const text = await res.text();
+          logDebug('info', 'Body ricevuto', { targetUrl: url, mode: proxy.name, chars: text.length });
+          return text;
+        } catch (err) {
+          const ms = Math.round(performance.now() - t0);
+          lastError = err;
+          logDebug('warn', 'Fetch fallito', { targetUrl: url, mode: proxy.name, ms, error: err && err.message ? err.message : String(err) });
+        }
+      }
+
+      throw new Error(`Tutti i tentativi fetch falliti per ${url}: ${lastError ? (lastError.message || String(lastError)) : 'errore sconosciuto'}`);
+    }
+
+    function normalizeFuelName(value) {
+      const v = String(value || '').trim().toLowerCase();
+      if (v === 'benzina') return 'Benzina';
+      if (v === 'gasolio') return 'Gasolio';
+      return value;
+    }
+
+    function makeStationId(item) {
+      return `${item.idImpianto}-${item.fuel}`;
+    }
+
+    async function loadStations() {
+      logDebug('info', 'loadStations() avviata', {
+        lat: state.userLat,
+        lng: state.userLng,
+        fuel: state.fuel,
+        radiusKm: state.radiusKm,
+        sortBy: state.sortBy
+      });
+
+      try {
+        showLoading('Recupero dati MIMIT...<br><small>Download anagrafica e prezzi</small>');
+
+        const [anagraficaText, prezziText] = await Promise.all([
+          fetchViaProxy(MIMIT_ANAGRAFICA),
+          fetchViaProxy(MIMIT_PREZZI)
+        ]);
+
+        showLoading('Elaborazione dati...<br><small>Incrocio anagrafica e prezzi</small>');
+
+        const anagrafica = safeCsvParse(anagraficaText, 'anagrafica');
+        const prezzi = safeCsvParse(prezziText, 'prezzi');
+        state.lastCounts.anagraficaRows = anagrafica.length;
+        state.lastCounts.prezziRows = prezzi.length;
+
+        const nearbyMap = new Map();
+        for (const row of anagrafica) {
+          const lat = parseFloat(row.Latitudine);
+          const lng = parseFloat(row.Longitudine);
+          if (Number.isNaN(lat) || Number.isNaN(lng)) continue;
+          const distance = calcDistance(state.userLat, state.userLng, lat, lng);
+          if (distance <= state.radiusKm) {
+            nearbyMap.set(row.idImpianto, {
+              idImpianto: row.idImpianto,
+              brand: row.Bandiera || 'No logo',
+              name: row['Nome Impianto'] || 'Impianto',
+              lat,
+              lng,
+              dist: distance,
+              comune: row.Comune || '',
+              provincia: row.Provincia || '',
+              address: row.Indirizzo || ''
+            });
+          }
+        }
+
+        state.lastCounts.nearbyStations = nearbyMap.size;
+        logDebug('info', 'Impianti nel raggio trovati', { count: nearbyMap.size, radiusKm: state.radiusKm });
+
+        const results = [];
+        for (const row of prezzi) {
+          const station = nearbyMap.get(row.idImpianto);
+          if (!station) continue;
+          const fuel = normalizeFuelName(row.descCarburante);
+          if (fuel !== 'Benzina' && fuel !== 'Gasolio') continue;
+          if (String(row.isSelf) !== '1') continue;
+          const price = parseFloat(row.prezzo);
+          if (Number.isNaN(price)) continue;
+          results.push({
+            ...station,
+            fuel,
+            price,
+            updatedAt: row.dtComu || '',
+            self: true,
+            itemId: `${row.idImpianto}-${fuel}`
+          });
+        }
+
+        if (!results.length) throw new Error('Nessun risultato disponibile');
+
+        state.stations = results;
+        state.lastCounts.results = results.length;
+        state.dataSource = 'MIMIT reale';
+        state.lastRefreshAt = Date.now();
+        state.lastError = '';
+
+        const cheapest = [...results]
+          .filter((x) => x.fuel === state.fuel)
+          .sort((a, b) => a.price - b.price || a.dist - b.dist)[0];
+
+        logDebug('ok', 'Dati reali caricati', {
+          risultati: results.length,
+          cheapest: cheapest ? `${cheapest.brand} ${cheapest.price.toFixed(3)} €/L a ${cheapest.dist.toFixed(1)} km` : 'n/d'
+        });
+
+        applyFiltersAndRender();
+      } catch (err) {
+        state.lastError = err && err.message ? err.message : String(err);
+        state.dataSource = 'demo fallback';
+        state.lastRefreshAt = Date.now();
+        logDebug('error', 'Load reale fallita, uso dati demo', state.lastError);
+        showToast('Dati reali non disponibili. Uso dati demo.');
+        state.stations = generateMockStations();
+        state.lastCounts.results = state.stations.length;
+        applyFiltersAndRender();
+      } finally {
+        hideLoading();
+        renderDebugLog();
+      }
+    }
+
+    function generateMockStations() {
+      const brands = ['Eni', 'IP', 'Esso', 'Q8', 'Tamoil', 'Enercoop', 'Conad'];
+      const result = [];
+
+      for (let i = 0; i < 16; i++) {
+        const latOffset = (Math.random() - 0.5) * 0.08;
+        const lngOffset = (Math.random() - 0.5) * 0.08;
+        const lat = state.userLat + latOffset;
+        const lng = state.userLng + lngOffset;
+        const dist = calcDistance(state.userLat, state.userLng, lat, lng);
+        if (dist > state.radiusKm) continue;
+
+        const brand = brands[Math.floor(Math.random() * brands.length)];
+        const benzina = 1.71 + (Math.random() * 0.12 - 0.05);
+        const gasolio = 1.63 + (Math.random() * 0.12 - 0.05);
+        const base = {
+          idImpianto: String(1000 + i),
+          brand,
+          name: `${brand} ${i + 1}`,
+          lat,
+          lng,
+          dist,
+          comune: 'Ferrara',
+          provincia: 'FE',
+          address: 'Via locale'
+        };
+
+        result.push({ ...base, fuel: 'Benzina', price: benzina, updatedAt: '', self: true, itemId: `${1000 + i}-Benzina` });
+        result.push({ ...base, fuel: 'Gasolio', price: gasolio, updatedAt: '', self: true, itemId: `${1000 + i}-Gasolio` });
+      }
+
+      logDebug('warn', 'Dataset demo generato', { righe: result.length, lat: state.userLat, lng: state.userLng });
+      return result;
+    }
+
+    function applyFiltersAndRender() {
+      let data = state.stations.filter((item) => item.fuel === state.fuel);
+      data = data.filter((item) => item.dist <= state.radiusKm);
+
+      if (state.sortBy === 'price-asc') data.sort((a, b) => a.price - b.price || a.dist - b.dist);
+      if (state.sortBy === 'price-desc') data.sort((a, b) => b.price - a.price || a.dist - b.dist);
+      if (state.sortBy === 'distance-asc') data.sort((a, b) => a.dist - b.dist || a.price - b.price);
+
+      state.filteredStations = data;
+      const first = data[0];
+      logDebug('info', 'Filtri applicati', {
+        visibili: data.length,
+        primo: first ? `${first.brand} ${first.fuel} ${first.price.toFixed(3)} €/L a ${first.dist.toFixed(1)} km` : 'nessuno'
+      });
+      renderMap();
+      renderList();
+      renderHeaderMeta();
+      renderDebugLog();
+    }
+
+    function renderHeaderMeta() {
+      const list = state.filteredStations;
+      const avg = list.length ? list.reduce((s, x) => s + x.price, 0) / list.length : null;
+      $('avg-price').textContent = avg ? avg.toFixed(3) : '--';
+      $('sheet-title').textContent = `${list.length} distributori entro ${state.radiusKm} km`;
+      $('sheet-subtitle').textContent = `${state.fuel} self service · ${labelSort(state.sortBy)}`;
+      $('top-subtitle').textContent = `${state.fuel} · raggio ${state.radiusKm} km · ${list.length} risultati`;
+    }
+
+    function renderMap() {
+      for (const marker of state.stationMarkers) map.removeLayer(marker);
+      state.stationMarkers = [];
+
+      if (state.userMarker) {
+        state.userMarker.setLatLng([state.userLat, state.userLng]);
+      } else {
+        state.userMarker = L.circleMarker([state.userLat, state.userLng], {
+          radius: 8,
+          fillColor: '#3b82f6',
+          color: '#fff',
+          weight: 3,
+          opacity: 1,
+          fillOpacity: 1
+        }).addTo(map);
+      }
+
+      const avg = state.filteredStations.length ? state.filteredStations.reduce((s, x) => s + x.price, 0) / state.filteredStations.length : null;
+
+      state.filteredStations.forEach((station, index) => {
+        const colorClass = getMarkerColor(station.price, avg);
+        const brandLabel = String(station.brand || 'NO LOGO').toUpperCase();
+
+        const icon = L.divIcon({
+          className: '',
+          html: `
+            <div class="mimit-marker">
+              <div class="mimit-price ${colorClass}">${station.price.toFixed(3)}</div>
+              <div class="mimit-brand">${brandLabel}</div>
+              <div class="mimit-triangle"></div>
+            </div>
+          `,
+          iconSize: [58, 46],
+          iconAnchor: [29, 46]
+        });
+
+        const popupHtml = `
+          <div style="min-width:220px">
+            <b>${station.brand}</b><br>
+            ${station.name}<br>
+            ${station.address || ''} ${station.comune || ''}<br>
+            <b>${station.fuel}</b> self: ${station.price.toFixed(3)} €/L<br>
+            Distanza: ${station.dist.toFixed(1)} km<br><br>
+            <button onclick="window.__goToStation(${index})" style="background:#16a34a;color:white;border:none;border-radius:10px;padding:8px 10px;cursor:pointer;font-weight:700;width:100%">Apri navigazione</button>
+          </div>
+        `;
+
+        const marker = L.marker([station.lat, station.lng], { icon }).addTo(map).bindPopup(popupHtml);
+        marker.on('click', () => {
+          logDebug('info', 'Marker cliccato', { index, brand: station.brand, price: station.price, dist: station.dist });
+          focusStation(index, false);
+        });
+        state.stationMarkers.push(marker);
+      });
+
+      logDebug('info', 'Marker renderizzati', { count: state.stationMarkers.length });
+      setTimeout(() => map.invalidateSize(), 120);
+    }
+
+    function renderList() {
+      const container = $('station-list');
+      container.innerHTML = '';
+
+      if (!state.filteredStations.length) {
+        container.innerHTML = '<div id="empty-state">Nessun distributore trovato con questi filtri.</div>';
+        return;
+      }
+
+      const avg = state.filteredStations.reduce((s, x) => s + x.price, 0) / state.filteredStations.length;
+
+      state.filteredStations.forEach((station, index) => {
+        const card = document.createElement('div');
+        card.className = 'station-card';
+        card.addEventListener('click', () => {
+          logDebug('info', 'Card lista cliccata', { index, brand: station.brand, price: station.price, dist: station.dist });
+          focusStation(index, true);
+        });
+
+        const isFavorite = state.favoriteIds.has(makeStationId(station));
+
+        card.innerHTML = `
+          <div class="min-w-0 flex-1">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <div class="station-brand">${station.brand}</div>
+                <div class="station-name truncate">${station.name}</div>
+              </div>
+              <button type="button" class="fav-btn" data-idx="${index}" aria-label="preferito" style="color:${isFavorite ? '#f43f5e' : '#d1d5db'}">
+                ❤
+              </button>
+            </div>
+            <div class="station-meta">${station.dist.toFixed(1)} km · ${station.address || station.comune || ''}</div>
+            <div class="station-badge ${getBadgeClass(station.price, avg)}">${getBadgeText(station.price, avg)}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="station-price">${station.price.toFixed(3)}</div>
+            <div style="font-size:12px;color:#6b7280">€/L</div>
+            <button type="button" class="route-btn" data-route-idx="${index}" style="margin-top:8px;border:none;border-radius:8px;background:#4f46e5;color:white;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer">Vai</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      container.querySelectorAll('.route-btn').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const idx = Number(btn.dataset.routeIdx);
+          logDebug('info', 'Pulsante Vai cliccato', { index: idx });
+          openNavigation(state.filteredStations[idx]);
+        });
+      });
+
+      container.querySelectorAll('.fav-btn').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const idx = Number(btn.dataset.idx);
+          toggleFavorite(state.filteredStations[idx]);
+        });
+      });
+    }
+
+    function toggleFavorite(station) {
+      const id = makeStationId(station);
+      if (state.favoriteIds.has(id)) {
+        state.favoriteIds.delete(id);
+        showToast('Rimosso dai preferiti');
+        logDebug('info', 'Preferito rimosso', id);
+      } else {
+        state.favoriteIds.add(id);
+        showToast('Aggiunto ai preferiti');
+        logDebug('info', 'Preferito aggiunto', id);
+      }
+      localStorage.setItem('fuel-favorites', JSON.stringify([...state.favoriteIds]));
+      renderList();
+    }
+
+    function focusStation(index, openPopup) {
+      const station = state.filteredStations[index];
+      if (!station) return;
+      map.flyTo([station.lat, station.lng], 15, { duration: 0.8 });
+      if (openPopup && state.stationMarkers[index]) state.stationMarkers[index].openPopup();
+      expandSheet(true);
+    }
+
+    function expandSheet(force) {
+      const expanded = force !== undefined ? force : !state.sheetExpanded;
+      state.sheetExpanded = expanded;
+      $('sheet').classList.toggle('expanded', expanded);
+      logDebug('info', 'Bottom sheet', expanded ? 'expanded' : 'collapsed');
+    }
+
+    function toggleFilterPanel() {
+      state.filterPanelOpen = !state.filterPanelOpen;
+      $('filter-panel').classList.toggle('open', state.filterPanelOpen);
+      logDebug('info', 'Filter panel', state.filterPanelOpen ? 'open' : 'closed');
+    }
+
+    function openNavigation(station) {
+      if (!station) return;
+      const destination = `${station.lat},${station.lng}`;
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}&travelmode=driving`;
+      logDebug('info', 'Apro navigazione', { destination, brand: station.brand, price: station.price });
+      window.open(url, '_blank');
+    }
+
+    window.__goToStation = function(index) {
+      logDebug('info', 'Popup apri navigazione', { index });
+      openNavigation(state.filteredStations[index]);
+    };
+
+    function renderFavoritesOnly() {
+      state.filteredStations = state.stations
+        .filter((item) => item.fuel === state.fuel)
+        .filter((item) => state.favoriteIds.has(makeStationId(item)))
+        .sort((a, b) => a.price - b.price || a.dist - b.dist);
+      logDebug('info', 'Vista preferiti', { count: state.filteredStations.length });
+      renderMap();
+      renderList();
+      renderHeaderMeta();
+      expandSheet(true);
+      showToast('Mostro i preferiti');
+      renderDebugLog();
+    }
+
+    function renderEconomicalOnly() {
+      applyFiltersAndRender();
+      state.filteredStations = state.filteredStations.slice(0, 5);
+      logDebug('info', 'Vista economici top 5', { count: state.filteredStations.length });
+      renderMap();
+      renderList();
+      renderHeaderMeta();
+      expandSheet(true);
+      showToast('Mostro i più economici');
+      renderDebugLog();
+    }
+
+    function goToUserLocationFallback() {
+      showToast('Uso posizione di test: Ferrara');
+      state.userLat = 44.8381;
+      state.userLng = 11.6198;
+      state.gpsStatus = 'fallback Ferrara';
+      logDebug('warn', 'Fallback posizione usato', { lat: state.userLat, lng: state.userLng });
+      map.flyTo([state.userLat, state.userLng], 13, { duration: 0.8 });
+      loadStations();
+    }
+
+    async function locateUser() {
+      if (!navigator.geolocation) {
+        state.gpsStatus = 'non supportato';
+        logDebug('error', 'navigator.geolocation assente');
+        showToast('GPS non supportato dal browser');
+        goToUserLocationFallback();
+        return;
+      }
+
+      if (state.loadingGps) {
+        logDebug('warn', 'locateUser ignorata: già in corso');
+        return;
+      }
+
+      if (navigator.permissions && navigator.permissions.query) {
+        try {
+          const perm = await navigator.permissions.query({ name: 'geolocation' });
+          logDebug('info', 'Permission geolocation', perm.state);
+          if (perm.state === 'denied') {
+            state.gpsStatus = 'denied';
+            showToast('Permesso posizione negato: uso Ferrara');
+            logDebug('warn', 'Permission geolocation denied: salto getCurrentPosition');
+            goToUserLocationFallback();
+            return;
+          }
+        } catch (e) {
+          logDebug('warn', 'Permissions API non disponibile', e && e.message ? e.message : String(e));
+        }
+      }
+
+      state.loadingGps = true;
+      state.gpsStatus = 'richiesta in corso';
+      showLoading('Ricerca segnale GPS...<br><small>Consenti la posizione se richiesto</small>');
+
+      let settled = false;
+      const safeFinish = () => {
+        state.loadingGps = false;
+        hideLoading();
+        renderDebugLog();
+      };
+
+      const hardTimeout = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        state.gpsStatus = 'timeout';
+        logDebug('error', 'GPS timeout hard 8000ms');
+        safeFinish();
+        showToast('GPS non disponibile. Uso Ferrara.');
+        goToUserLocationFallback();
+      }, 8000);
+
+      try {
+        logDebug('info', 'getCurrentPosition chiamato', { enableHighAccuracy: true, timeout: 7000, maximumAge: 30000 });
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(hardTimeout);
+            state.userLat = pos.coords.latitude;
+            state.userLng = pos.coords.longitude;
+            state.gpsStatus = 'ok';
+            logDebug('ok', 'GPS ottenuto', {
+              lat: state.userLat,
+              lng: state.userLng,
+              accuracy: pos.coords.accuracy
+            });
+            map.flyTo([state.userLat, state.userLng], 13, { duration: 0.9 });
+            safeFinish();
+            showToast('Posizione rilevata');
+            loadStations();
+          },
+          (err) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(hardTimeout);
+            state.gpsStatus = `errore ${err.code}`;
+            logDebug('error', 'Errore geolocalizzazione', { code: err.code, message: err.message });
+            safeFinish();
+            showToast('Posizione negata o non disponibile. Uso Ferrara.');
+            goToUserLocationFallback();
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 7000,
+            maximumAge: 30000
+          }
+        );
+      } catch (err) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(hardTimeout);
+        state.gpsStatus = 'eccezione';
+        logDebug('error', 'Eccezione locateUser', err && err.message ? err.message : String(err));
+        safeFinish();
+        goToUserLocationFallback();
+      }
+    }
+
+    function setActiveNav(id) {
+      ['nav-home', 'nav-favorites', 'nav-map', 'nav-nearby', 'nav-economical'].forEach((x) => $(x).classList.remove('active'));
+      $(id).classList.add('active');
+      logDebug('info', 'Tab attiva', id);
+    }
+
+    function getLogText() {
+      return state.debugLines
+        .map((line) => `[${line.ts}] ${line.level.toUpperCase()} ${line.message}${line.data ? ' | ' + line.data : ''}`)
+        .join('\n');
+    }
+
+    async function copyDebugLog() {
+      const text = getLogText();
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('Log copiato');
+        logDebug('ok', 'Log copiato negli appunti');
+        return;
+      } catch (e) {
+        logDebug('warn', 'Clipboard API fallita, provo fallback', e && e.message ? e.message : String(e));
+      }
+
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const ok = document.execCommand('copy');
+        textarea.remove();
+        if (ok) {
+          showToast('Log copiato');
+          logDebug('ok', 'Log copiato con execCommand fallback');
+          return;
+        }
+      } catch (e) {
+        logDebug('warn', 'execCommand fallback fallito', e && e.message ? e.message : String(e));
+      }
+
+      logDebug('error', 'Copia log fallita', 'Clipboard bloccata dal contesto corrente');
+      showToast('Copia bloccata: usa Scarica log');
+    }
+
+    function downloadDebugLog() {
+      const blob = new Blob([getLogText()], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fuel-debug-${new Date().toISOString().replace(/[:.]/g, '-')}.log`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('Log scaricato');
+      logDebug('ok', 'File log scaricato');
+    }
+
+    function clearDebugLog() {
+      state.debugLines = [];
+      state.lastError = '';
+      logDebug('info', 'Log ripulito');
+    }
+
+    function runSelfTests() {
+      const tests = [];
+      const push = (name, ok, details) => tests.push({ name, ok, details });
+
+      const d0 = calcDistance(44, 11, 44, 11);
+      push('calcDistance stesso punto', Math.abs(d0) < 0.001, d0);
+
+      const parsed = safeCsvParse('meta\nidImpianto|Latitudine|Longitudine\n1|44.0|11.0\n', 'selftest');
+      push('safeCsvParse una riga', Array.isArray(parsed) && parsed.length === 1 && parsed[0].idImpianto === '1', parsed.length);
+
+      const items = [
+        { price: 1.8, dist: 3 },
+        { price: 1.7, dist: 4 },
+        { price: 1.7, dist: 2 }
+      ].sort((a, b) => a.price - b.price || a.dist - b.dist);
+      push('ordinamento prezzo e distanza', items[0].price === 1.7 && items[0].dist === 2, JSON.stringify(items[0]));
+
+      const proxyUrl = CORS_PROXIES[1].buildUrl('https://example.com/test.csv');
+      push('proxy url format', proxyUrl === 'https://corsproxy.io/?url=https%3A%2F%2Fexample.com%2Ftest.csv', proxyUrl);
+
+      const logText = [{ ts: '00:00:00', level: 'info', message: 'x', data: 'y' }]
+        .map((line) => `[${line.ts}] ${line.level.toUpperCase()} ${line.message}${line.data ? ' | ' + line.data : ''}`)
+        .join('\n');
+      push('join newline string', logText === '[00:00:00] INFO x | y', logText);
+
+      const htmlEscaped = escapeHtml('<b>x</b>');
+      push('escapeHtml basics', htmlEscaped === '&lt;b&gt;x&lt;/b&gt;', htmlEscaped);
+
+      tests.forEach((t) => logDebug(t.ok ? 'ok' : 'error', `SELFTEST ${t.name}`, t.details));
+    }
+
+    $('menu-btn').addEventListener('click', () => {
+      state.debugVisible = !state.debugVisible;
+      renderDebugLog();
+      logDebug('info', 'Debug panel toggle', state.debugVisible ? 'open' : 'closed');
+    });
+
+    $('debug-close-btn').addEventListener('click', () => {
+      state.debugVisible = false;
+      renderDebugLog();
+    });
+
+    $('debug-refresh-btn').addEventListener('click', () => {
+      logDebug('info', 'Refresh manuale richiesto');
+      loadStations();
+    });
+
+    $('debug-copy-btn').addEventListener('click', copyDebugLog);
+    $('debug-download-btn').addEventListener('click', downloadDebugLog);
+    $('debug-clear-btn').addEventListener('click', clearDebugLog);
+
+    $('filter-btn').addEventListener('click', toggleFilterPanel);
+    $('apply-filters-btn').addEventListener('click', () => {
+      state.fuel = $('fuel-select').value;
+      state.radiusKm = Number($('radius-select').value);
+      state.sortBy = $('sort-select').value;
+      state.filterPanelOpen = false;
+      $('filter-panel').classList.remove('open');
+      logDebug('info', 'Aggiorna filtri premuto', { fuel: state.fuel, radiusKm: state.radiusKm, sortBy: state.sortBy });
+      loadStations();
+    });
+
+    $('locate-btn').addEventListener('click', locateUser);
+    $('sheet-handle').addEventListener('click', () => expandSheet());
+
+    $('open-cheapest-route-btn').addEventListener('click', () => {
+      const first = state.filteredStations[0];
+      if (!first) {
+        showToast('Nessun distributore disponibile');
+        logDebug('warn', 'Vai al più economico: nessun risultato');
+        return;
+      }
+      logDebug('info', 'Vai al più economico', { brand: first.brand, price: first.price, dist: first.dist });
+      openNavigation(first);
+    });
+
+    $('nav-home').addEventListener('click', () => {
+      setActiveNav('nav-home');
+      applyFiltersAndRender();
+      expandSheet(false);
+      showToast('Vista principale');
+    });
+
+    $('nav-map').addEventListener('click', () => {
+      setActiveNav('nav-map');
+      applyFiltersAndRender();
+      expandSheet(false);
+      showToast('Vista mappa');
+    });
+
+    $('nav-nearby').addEventListener('click', () => {
+      setActiveNav('nav-nearby');
+      state.sortBy = 'distance-asc';
+      $('sort-select').value = 'distance-asc';
+      applyFiltersAndRender();
+      expandSheet(true);
+      showToast('Ordine per vicinanza');
+    });
+
+    $('nav-economical').addEventListener('click', () => {
+      setActiveNav('nav-economical');
+      state.sortBy = 'price-asc';
+      $('sort-select').value = 'price-asc';
+      renderEconomicalOnly();
+    });
+
+    $('nav-favorites').addEventListener('click', () => {
+      setActiveNav('nav-favorites');
+      renderFavoritesOnly();
+    });
+
+    window.addEventListener('load', async () => {
+      logDebug('info', 'window load');
+      $('fuel-select').value = state.fuel;
+      $('radius-select').value = String(state.radiusKm);
+      $('sort-select').value = state.sortBy;
+      renderDebugLog();
+      runSelfTests();
+      showLoading('Avvio app...<br><small>Caricamento distributori vicini</small>');
+      await loadStations();
+      expandSheet(false);
+    });
+  </script>
+</body>
+</html>
