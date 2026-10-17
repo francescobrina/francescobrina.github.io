@@ -1,0 +1,19 @@
+{
+  "name": "Pieno! — Prezzi carburante",
+  "short_name": "Pieno!",
+  "description": "Confronta i distributori e i prezzi MIMIT nella tua zona.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff9f1",
+  "theme_color": "#ff6534",
+  "lang": "it",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ]
+}
