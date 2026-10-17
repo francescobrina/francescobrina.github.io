@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "AriaQui — Respira, con i dati",
+  "short_name": "AriaQui",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fcf7ef",
+  "theme_color": "#ff8852",
+  "lang": "it",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ]
+}
