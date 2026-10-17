@@ -83,7 +83,7 @@ const bans=[
 ];
 const today=()=>new Date().toISOString().slice(0,10);
 function id(){return 'sys-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7)}
-function safe(s){return String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;':'&quot;',"'":'&#39;'}[ch]))}
+function safe(s){return String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 function blank(demo){const s={id:id(),name:demo?'Assistente HR (caso dimostrativo)':'',company:demo?'Impresa esempio — DATI FITTIZI':'',purpose:demo?'Preselezione automatizzata di candidature per posizioni lavorative.':'',owner:'',role:'deployer',region:'yes',annex:demo?'employment':'unknown',product:'unknown',profiling:demo?'yes':'unknown',exception:'unknown',bans:[],chat:demo?'yes':'unknown',synthetic:'unknown',deepfake:'unknown',emotionBio:'unknown',personal:demo?'yes':'unknown',gpai:'unknown',publicBody:'unknown',placed:'',notes:'',controls:{},created:today(),modified:today(),demo:!!demo};return s}
 let store={version:VERSION,systems:[],selected:null},tab='overview';
 try{let parsed=JSON.parse(localStorage.getItem(STORAGE));if(parsed&&parsed.version===VERSION&&Array.isArray(parsed.systems))store=parsed}catch(e){console.warn('Impossibile leggere dati precedenti')}
