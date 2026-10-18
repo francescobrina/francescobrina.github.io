@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ff7842">
+  <meta name="description" content="SvuotaPrima: organizza la vendita degli oggetti prima di liberare casa. Cataloghi, scadenze, margini e richieste senza complicazioni.">
+  <meta property="og:title" content="SvuotaPrima — Libera casa, recupera valore">
+  <meta property="og:description" content="Prima di buttare o sgomberare, scopri cosa puoi vendere e organizza una liquidazione a scadenza.">
+  <title>SvuotaPrima — Libera casa, recupera valore</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="announcement"><span class="spark">✳</span> FERRARA · PROGETTO PILOTA 2026 <span class="ann-right">UNA STANZA ALLA VOLTA. UN VALORE ALLA VOLTA.</span></div>
+  <header class="nav wrap">
+    <a href="#inizio" class="brand" aria-label="SvuotaPrima, torna all'inizio"><span class="brand-icon">S<span>↗</span></span><span>svuota<span class="brand-strong">prima</span><small>THE CLEAROUT CLUB</small></span></a>
+    <nav aria-label="Navigazione principale">
+      <a href="#come-funziona" class="nav-desktop">Come funziona</a><a href="#prezzi" class="nav-desktop">Prezzi</a>
+      <button class="nav-action" data-studio>Apri Studio <span aria-hidden="true">↗</span></button>
+    </nav>
+  </header>
+  <main id="publicView">
+    <section id="inizio" class="hero">
+      <div class="hero-inner wrap">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="eyebrow-dot"></span> LA CASA CAMBIA. IL VALORE RESTA.</div>
+          <h1>LIBERA<br>CASA.<br><em>NON</em> IL<br>VALORE<span class="dot">.</span></h1>
+          <p class="hero-desc">Trasloco, eredità, immobile da consegnare? Organizza la vendita degli oggetti <strong>prima</strong> di svuotarlo. Con una scadenza vera, non annunci dimenticati.</p>
+          <div class="hero-actions"><a class="btn btn-ink" href="#richiesta">Ho una casa da liberare <span>↗</span></a><a class="text-link" href="#come-funziona">Scopri come funziona <span>↓</span></a></div>
+          <div class="hero-foot"><span class="foot-star">✳</span><span>ZERO SPRECHI INUTILI</span><i></i><span>PIÙ CONTROLLO SUI RICAVI</span></div>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="circle-outline c1"></div><div class="circle-outline c2"></div>
+          <div class="art-disc"><div class="art-disc-inner"><span>01/03</span><strong>PRIMA<br>SI<br>VENDE.</strong><div class="disc-footer">POI SI FA SPAZIO <b>↗</b></div></div></div>
+          <div class="floating-note"><span>ULTIMA CHIAMATA</span><b>14 GIORNI</b><small>UN PIANO, NON IL CAOS.</small></div>
+          <span class="art-squiggle">↜</span>
+        </div>
+      </div>
+      <div class="marquee"><div>RIDUCI GLI SPRECHI <span>✳</span> RECUPERA VALORE <span>✳</span> LIBERA SPAZIO <span>✳</span> RIDUCI GLI SPRECHI <span>✳</span> RECUPERA VALORE <span>✳</span> LIBERA SPAZIO <span>✳</span></div></div>
+    </section>
+    <section id="come-funziona" class="section wrap">
+      <div class="section-head"><div><div class="kicker">01 / IL METODO</div><h2>Non svuotare.<br><em>Organizza.</em></h2></div><p>Perché ogni oggetto buttato troppo presto potrebbe essere valore perso. E ogni annuncio senza una scadenza è tempo perso.</p></div>
+      <div class="steps">
+        <article class="step"><span class="step-num">01 —</span><div class="step-visual photo"><span class="v-box">▧</span><span class="v-corner">+ + +</span></div><h3>Fai l'inventario.</h3><p>Fotografa gli oggetti e crea schede con prezzo, stato e note. Tutto in un unico posto.</p></article>
+        <article class="step"><span class="step-num">02 —</span><div class="step-visual timer"><div class="visual-timer">07<span>GG</span></div><span class="v-corner">↗ ↗</span></div><h3>Imposta una scadenza.</h3><p>L'app propone una fascia di prezzo rapido orientativa e segnala cosa richiede attenzione.</p></article>
+        <article class="step"><span class="step-num">03 —</span><div class="step-visual ledger"><span>€ 1.280</span><span>↗ RECUPERATI*</span></div><h3>Chiudi il cerchio.</h3><p>Segna gli oggetti venduti, controlla gli incassi ed esporta un catalogo da condividere.</p></article>
+      </div>
+      <p class="micro-note">* Esempio illustrativo. SvuotaPrima non garantisce prezzi, acquisti né risultati economici.</p>
+    </section>
+    <section class="manifesto"><div class="wrap manifesto-grid"><div class="kicker">NON È UN ALTRO MERCATINO.</div><h2>NON SERVONO<br>100 ANNUNCI.<br><em>SERVE UN PIANO.</em></h2><p>Una sola scadenza, un inventario chiaro, un catalogo condivisibile. Per chi deve liberare uno spazio e per chi lo fa di mestiere.</p></div></section>
+    <section class="section wrap" id="prezzi"><div class="section-head"><div><div class="kicker">02 / NUMERI, NON PROMESSE</div><h2>Il valore<br><em>si misura.</em></h2></div><p>Calcola un caso ipotetico. Le commissioni sono un'ipotesi commerciale da concordare, non una tariffa già applicata.</p></div>
+      <div class="calc-layout"><div class="calc-left"><label for="calcSold">Valore realmente venduto <output id="calcSoldOut">1.200 €</output></label><input id="calcSold" type="range" min="0" max="5000" value="1200" step="100"><label for="calcFee">Commissione ipotetica <output id="calcFeeOut">25%</output></label><input id="calcFee" type="range" min="10" max="35" value="25" step="5"><label for="calcCost">Costi operativi <output id="calcCostOut">100 €</output></label><input id="calcCost" type="range" min="0" max="1000" value="100" step="25"><p class="micro-note">Calcolo dimostrativo: quota fissa ipotetica di 99 €, non vincolante. Costi fiscali e valore del tempo esclusi.</p></div><div class="calc-right"><span>RICAVO SERVIZIO IPOTETICO</span><strong id="calcIncome">399 €</strong><div class="calc-line"></div><span>MARGINE PRIMA DI IMPOSTE E LAVORO</span><strong id="calcMargin" class="smaller">299 €</strong><span class="calc-decoration">↗</span></div></div>
+    </section>
+    <section id="richiesta" class="contact-section"><div class="wrap contact-grid"><div><div class="kicker">03 / PARTIAMO DAL TUO CASO</div><h2>HAI UNA CASA<br>DA <em>LIBERARE?</em></h2><p>Inviaci i dati essenziali. Il pulsante apre la tua app email con una richiesta già compilata: non carichiamo informazioni su alcun server.</p><span class="stamp">FERRARA<br>E DINTORNI ↗</span></div>
+        <form id="leadForm" class="lead-form">
+          <label>Come ti chiami? <input name="nome" autocomplete="name" required placeholder="Nome e cognome" maxlength="100"></label>
+          <label>In che città si trova l'immobile? <input name="citta" required placeholder="Es. Ferrara" maxlength="100"></label>
+          <div class="two-cols"><label>Entro quando va liberato? <input name="scadenza" type="date" required></label><label>Quante stanze? <select name="stanze"><option value="1-2">1–2</option><option value="3-4">3–4</option><option value="5+">5 o più</option></select></label></div>
+          <label>Che cosa c'è da vendere? <textarea name="descrizione" rows="3" required maxlength="1600" placeholder="Mobili, quadri, libri, oggetti, arredi..."></textarea></label>
+          <label class="checkline"><input type="checkbox" required> Capisco che la richiesta verrà inviata tramite la mia app email e che non è un preventivo automatico.</label>
+          <button class="btn btn-orange" type="submit">Prepara la richiesta <span>↗</span></button><p class="micro-note">Non ti chiediamo dati bancari. Evita indirizzi completi e dati sensibili nella prima richiesta.</p>
+        </form></div></section>
+    <footer class="wrap footer"><div class="brand brand-footer"><span class="brand-icon">S<span>↗</span></span><span>svuota<span class="brand-strong">prima</span></span></div><span>PROTOTIPO OPERATIVO · 2026</span><a href="#inizio">TORNA SU ↑</a></footer>
+  </main>
+  <main id="studioView" class="studio is-hidden" aria-hidden="true">
+    <div class="wrap studio-wrap">
+      <div class="studio-topline"><button type="button" class="back-link" id="backPublic">← Torna al sito</button><div class="local-pill">● DATI LOCALI SUL DISPOSITIVO</div></div>
+      <div class="studio-heading"><div><div class="kicker">SVUOTAPRIMA / STUDIO v1</div><h1>La tua <em>cabina di regia.</em></h1><p>Inventario, tempi, vendite e cataloghi. Nessun account necessario.</p></div><div class="studio-actions"><button class="btn btn-outline" id="importBtn">Importa backup</button><button class="btn btn-ink" id="newProjectBtn">+ Nuovo immobile</button></div></div>
+      <div class="studio-summary"><article><span>IMMOBILI</span><strong id="kpiProjects">0</strong></article><article><span>OGGETTI INVENTARIATI</span><strong id="kpiItems">0</strong></article><article><span>INCASSATO</span><strong id="kpiRevenue">0 €</strong></article><article><span>VALORE DA VENDERE*</span><strong id="kpiAvailable">0 €</strong></article></div>
+      <div class="studio-bar"><h2 id="workspaceTitle">I tuoi immobili</h2><div class="bar-actions"><button class="button-ghost" id="exportBackupBtn">↓ Esporta backup</button><button class="button-ghost" id="openSettingsBtn">⚙ Impostazioni</button></div></div>
+      <div id="projectsPanel"></div>
+      <div id="projectPanel" class="is-hidden"></div>
+      <p class="studio-warning">I dati rimangono in questo browser e possono essere eliminati cancellandone la memoria. Esporta regolarmente un backup. Prezzi rapidi indicativi: non sono perizie né dati di mercato.</p>
+    </div>
+  </main>
+  <dialog id="modal" class="modal"><form method="dialog" id="modalForm"><div class="modal-head"><h2 id="modalTitle">Nuovo immobile</h2><button class="modal-close" aria-label="Chiudi" type="button" id="closeModal">×</button></div><div id="modalBody"></div><div class="modal-actions"><button type="button" class="button-ghost" id="cancelModal">Annulla</button><button class="btn btn-orange" id="submitModal" type="submit">Salva <span>↗</span></button></div></form></dialog>
+  <input type="file" accept=".json,application/json" id="backupInput" hidden>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body></html>
