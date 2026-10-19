@@ -1,7 +1,7 @@
 
 (()=>{'use strict';
 const $=id=>document.getElementById(id), all=q=>[...document.querySelectorAll(q)];
-const COLORS={green:['#13a876','#e5f6ed'],blue:['#3896b4','#e7f4fa'],yellow:['#dfa92a','#fff4d6'],orange:['#ed8339','#ffedd8'],red:['#df5460','#ffeaec'],purple:['#9760c8','#f2e8fb'],gray:['#8d99a2','#edf1f3']};
+const COLORS={green:['#13a876','#e5f6ed'],blue:['#3896b4','#e7f4fa'],yellow:['#dfa92a','#fff4d6'],orange:['#ed8339','#ffedd8'],red:['#df5460','#ffeaec'],purple:['#9760c8','#f2e8fb'],trendlow:['#78aca2','#e9f5f1'],trendmid:['#79aabd','#ecf6f9'],trendhigh:['#648fb8','#edf3f9'],trendpeak:['#687fae','#eaf0fa'],gray:['#8d99a2','#edf1f3']};
 const LINK={aqi:'https://airindex.eea.europa.eu/AQI/',uv:'https://www.who.int/news-room/questions-and-answers/item/radiation-the-ultraviolet-%28uv%29-index',gamma:'https://remap.jrc.ec.europa.eu/',cams:'https://open-meteo.com/en/docs/air-quality-api',ufp:'https://www.arpae.it/it/temi-ambientali/aria/scopri-di-piu/progetti-speciali/progetto-supersito'};
 const KEYS=[['pm2_5','european_aqi_pm2_5','PM2.5'],['pm10','european_aqi_pm10','PM10'],['nitrogen_dioxide','european_aqi_nitrogen_dioxide','NO2'],['ozone','european_aqi_ozone','Ozono'],['sulphur_dioxide','european_aqi_sulphur_dioxide','SO2'],['carbon_monoxide',null,'CO']];
 const valid=x=>typeof x==='number'&&Number.isFinite(x)?x:null;
@@ -21,14 +21,14 @@ function relative(j,key,i,value,stale){
  const hist=Array.isArray(j?.hourly?.[key])?j.hourly[key].slice(Math.max(0,i-24),i).filter(x=>valid(x)!==null):[];
  if(hist.length<8)return S('gray','Solo valore','Non sono disponibili almeno otto ore precedenti per fare un confronto.','Il colore non è una classificazione sanitaria.',LINK.cams);
  const lo=Math.min(...hist),hi=Math.max(...hist);
- if(hi-lo<=Math.max(1e-12,Math.abs(hi)*1e-8))return S('blue','Stabile · 24 h','Concentrazione pressoché invariata nelle ore disponibili.','Stabilità non significa innocuità.',LINK.cams,45);
+ if(hi-lo<=Math.max(1e-12,Math.abs(hi)*1e-8))return S('trendmid','Trend · stabile','Concentrazione pressoché invariata nelle ore disponibili.','Questa è una descrizione della tendenza, NON un giudizio di sicurezza sanitaria.',LINK.cams,45);
  const rank=(hist.filter(v=>v<value).length+.5*hist.filter(v=>v===value).length)/hist.length;
- const why='Valore circa al percentile '+Math.round(rank*100)+' rispetto alle ultime '+hist.length+' ore precedenti del modello. Indica soltanto una posizione relativa, NON il rischio sanitario.';
- const method='Confronto AriaQui sulle precedenti 24 ore (almeno 8 valide). Non sono soglie sanitarie, normative o di tossicità.';
- if(rank<=.25)return S('green','Basso vs 24 h',why,method,LINK.cams,20);
- if(rank<=.75)return S('blue','Medio vs 24 h',why,method,LINK.cams,48);
- if(rank<=.90)return S('yellow','Alto vs 24 h',why,method,LINK.cams,76);
- return S('orange','Picco vs 24 h',why,method,LINK.cams,97);
+ const why='Valore circa al percentile '+Math.round(rank*100)+' rispetto alle ultime '+hist.length+' ore precedenti del modello. I gas possono variare durante il giorno per reazioni atmosferiche e condizioni meteorologiche. Un valore alto rispetto alla notte o al mattino NON significa automaticamente concentrazione elevata o pericolosa.';
+ const method='TREND, NON ALLARME. Confronto AriaQui sulle precedenti 24 ore (almeno 8 valide), calcolato sui dati modellati CAMS. Le categorie non sono soglie sanitarie, normative né di tossicità. Una variazione relativa va interpretata insieme al valore assoluto, alla fonte e alle medie di esposizione.';
+ if(rank<=.25)return S('trendlow','Trend · sotto i recenti',why,method,LINK.cams,20);
+ if(rank<=.75)return S('trendmid','Trend · nella media',why,method,LINK.cams,48);
+ if(rank<=.90)return S('trendhigh','Trend · sopra i recenti',why,method,LINK.cams,76);
+ return S('trendpeak','Trend · fra i più alti',why,method,LINK.cams,97);
 }
 function ultraviolet(v,stale){
  if(v===null)return no();if(stale)return cached();
@@ -64,7 +64,8 @@ function colorCard(card,grade,title,value){
  card.classList.add('grade-card');card.style.setProperty('--signal',p[0]);card.style.setProperty('--tint',p[1]);card.style.setProperty('--percent',grade.pct+'%');
  let tag=card.querySelector('.grade-chip');if(!tag){tag=document.createElement('span');tag.className='grade-chip';card.append(tag);}tag.textContent=grade.label;tag.style.setProperty('--signal',p[0]);tag.style.setProperty('--tint',p[1]);
  let bar=card.querySelector('.grade-track');if(!bar){bar=document.createElement('div');bar.className='grade-track';bar.append(document.createElement('span'));card.append(bar)}
- if(!card.querySelector('.grade-tap')){let hint=document.createElement('div');hint.className='grade-tap';hint.textContent='Tocca per leggere la spiegazione ↗';card.append(hint)}
+ if(!card.querySelector('.grade-tap')){let hint=document.createElement('div');hint.className='grade-tap';card.append(hint)}
+ const hint=card.querySelector('.grade-tap');hint.textContent=grade.tone.startsWith('trend')?'Solo confronto orario · non è un allarme · Tocca ↗':'Tocca per leggere la spiegazione ↗';
  card._info={title,value,grade};
  if(!card.dataset.scoreBound){card.dataset.scoreBound='true';card.classList.add('grade-clickable');card.tabIndex=0;card.setAttribute('role','button');
  card.addEventListener('click',e=>{if(!e.target.closest('a,button,select,input,label'))openInfo(card._info)});
@@ -82,7 +83,10 @@ function colorAir(){
 function colorAdvanced(){
  const z=window.__aqScoreLast;
  all('#advCards .advcard').forEach(card=>{const key=card.dataset.key,group=card.dataset.group;const v=group==='unavailable'?null:valid(z?.j?.hourly?.[key]?.[z?.hour]);const gr=relative(z?.j,key,z?.hour||0,v,z?.stale||false);
- colorCard(card,gr,card.querySelector('.name')?.textContent||key||'Parametro',fmt(v)+(card.querySelector('.val small')?.textContent||''))});
+ const context=key==='methane'?' La concentrazione assoluta di metano va letta tenendo conto che il gas è naturalmente presente nell’atmosfera a circa 1,9 ppm su scala globale (NOAA, 2026). Non è un indice di tossicità locale.':key==='formaldehyde'?' Come ordine di grandezza, l’OMS indica 100 µg/m³ di formaldeide in ambienti interni su media di 30 minuti. Non è una soglia direttamente confrontabile con questa stima modellata esterna e oraria.':key==='glyoxal'?' La quantità in µg/m³ può essere piccola anche quando è tra le più alte nelle ultime ore.':'';
+ if(context)gr.reason+=context;
+ const title=card.querySelector('.name')?.textContent||key||'Parametro';
+ colorCard(card,gr,title,fmt(v)+(card.querySelector('.val small')?.textContent||''))});
 }
 function colorGamma(){
  const source=window.__aqGammaLast;const card=$('gammaReadout')?.closest('.radiocard');if(!card)return;
@@ -94,7 +98,7 @@ function colorNano(){
  const el=document.querySelector(sel);if(!el)return;const badge=el.querySelector('.nano-pill');if(badge)badge.remove();colorCard(el,S('gray','Non monitorato','Nessun valore verificato per il punto selezionato. N/D non indica zero.',method,LINK.ufp),title,'N/D');
  }
 }
-function legend(){if($('scoringLegend'))return;const e=document.createElement('div');e.id='scoringLegend';e.className='mini-scale-guide';e.innerHTML='<b>Legenda:</b> AQI e UV: scale riconosciute. Gamma: confronto indicativo col fondo naturale, NON allarme. Detective: variazione relativa alle ultime 24 ore, NON tossicità. Grigio: dato non classificabile. Tocca una scheda per vedere il criterio.';document.getElementById('advanced')?.append(e);}
+function legend(){if($('scoringLegend'))return;const e=document.createElement('div');e.id='scoringLegend';e.className='mini-scale-guide';e.innerHTML='<b>ATTENZIONE AI COLORI:</b> le schede Detective hanno bordi blu/verde-acqua perché mostrano <b>solo la tendenza rispetto alle ore precedenti</b>. Non indicano il pericolo o il superamento di un limite sanitario. Le categorie dell’AQI e dell’UV usano invece scale specifiche; per gamma il colore è solo un confronto orientativo con il fondo naturale. Grigio = N/D. Tocca ogni scheda per le spiegazioni.';document.getElementById('advanced')?.append(e);}
 function paint(){legend();colorNano();colorAir();colorGamma();}
 window.addEventListener('ariaqui:render',colorAir);window.addEventListener('ariaqui:cards',colorAdvanced);window.addEventListener('ariaqui:gamma',colorGamma);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',paint);else paint();
