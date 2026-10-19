@@ -1,0 +1,32 @@
+/* AriaQui 5.5: honest colors. Blue/amber relative measurements are not medical thresholds. */
+.grade-card{--signal:#8d99a2;--tint:#eef1f3;border:1.5px solid var(--signal)!important;background:linear-gradient(145deg,var(--tint),var(--paper,#fffdfa) 74%)!important;box-shadow:0 5px 0 var(--tint),0 13px 24px #52342014!important;transition:transform .15s}
+.grade-card.grade-clickable{cursor:pointer}
+.grade-card.grade-clickable:hover{transform:translateY(-2px)}
+.grade-card.grade-clickable:focus-visible,.tap-detail:focus-visible{outline:3px solid #3984b7;outline-offset:3px}
+.grade-chip{font-size:10px;line-height:1.3;font-weight:950;display:inline-flex;align-items:center;max-width:100%;padding:5px 8px;border-radius:30px;border:1px solid var(--signal,#8d99a2);background:var(--tint,#edf0f2);color:#413329;white-space:normal;text-align:center}
+.grade-track{width:100%;height:7px;border-radius:8px;overflow:hidden;background:#ded8d2;margin-top:11px}
+.grade-track span{display:block;width:var(--percent,0%);height:100%;background:var(--signal);border-radius:8px}
+.grade-desc{margin-top:8px;font-size:10px;font-weight:800;line-height:1.35;color:#735d4e}
+.grade-tap{font-size:10px;font-weight:750;color:#755c49;margin-top:7px}
+.advcard.grade-card{gap:5px;min-height:152px}
+.advcard .grade-chip{align-self:flex-start;margin-top:5px}
+.radiocard.grade-card{border:1.5px solid var(--signal)!important}
+.radioVal.tap-detail,.nano-measure.tap-detail{cursor:pointer;display:inline-block;border-radius:8px;outline-offset:4px}
+.nano-card.grade-card{border:1.5px solid var(--signal)!important}
+.mini-scale-guide{font-size:11px;line-height:1.65;color:#6d5c51;margin-top:12px;padding:10px 12px;border:1px solid #edd9c8;background:#fff7ea;border-radius:13px}
+.mini-scale-guide b{color:#3d302b}
+.mini-scale-guide .dot{display:inline-block;border-radius:50%;width:9px;height:9px;margin-right:3px}
+#scoreDialog{border:0;max-width:480px;width:calc(100vw - 26px);max-height:83dvh;overflow:auto;border-radius:26px;padding:0;background:#fffdf8;color:#30241c;box-shadow:0 30px 90px #28160e66}
+#scoreDialog::backdrop{background:#2c1d15a8;backdrop-filter:blur(4px)}
+.score-dialog-body{padding:23px}
+.score-dialog-head{display:flex;justify-content:space-between;align-items:start;gap:12px}
+.score-dialog-head h2{margin:3px 0 14px;font-size:25px;letter-spacing:-.05em;line-height:1.1}
+.score-dialog-close{border:0;background:#fae7d7;color:#4b3327;border-radius:50%;width:37px;height:37px;font-size:21px;font-weight:900}
+.score-dialog-val{font-size:28px;font-weight:1000;letter-spacing:-.05em;margin:9px 0}
+.score-dialog-p{font-size:13px;line-height:1.63;color:#5c4b41;white-space:pre-line}
+.score-dialog-method{padding:13px 14px;margin-top:12px;border-radius:14px;background:#f6ece3;color:#68564a;font-size:12px;line-height:1.65}
+.score-dialog-link{font-size:12px;font-weight:900;color:#ae4d2c;display:inline-block;margin-top:14px;text-decoration:underline}
+body.darkmode .grade-card{--paper:#392e29;background:linear-gradient(145deg,#40362f,#392e29)!important;color:#fff3e5}
+body.darkmode .grade-chip{color:#2f261f}body.darkmode .grade-tap,body.darkmode .grade-desc,body.darkmode .mini-scale-guide{color:#e1cbb8}
+body.darkmode .mini-scale-guide{background:#3c312b;border-color:#695043}
+@media(max-width:650px){.grade-chip{font-size:9px;padding:4px 6px}.grade-tap{font-size:9px}.grade-desc{font-size:9px}.score-dialog-body{padding:18px}.advcard.grade-card{min-height:143px}}
