@@ -35,3 +35,9 @@ body.darkmode .mini-scale-guide{background:#3c312b;border-color:#695043}
 .pollutant.grade-card > .bar{display:none}
 .radiocard.grade-card > .grade-chip{margin-top:10px}
 .nano-card.grade-card > .grade-chip{margin:8px 0}
+
+.detective-explainer{display:flex;flex-direction:column;gap:5px;background:#e7f2f3;border:1.5px solid #80adba;border-left:6px solid #278da5;border-radius:17px;padding:13px 15px;margin:10px 0 16px;color:#305361;line-height:1.5;font-size:12px}
+.detective-explainer strong{font-size:13px;font-weight:950;color:#174856}
+.detective-explainer span{font-weight:600}
+body.darkmode .detective-explainer{background:#1d3a41;color:#dbedf0;border-color:#4d899a}
+body.darkmode .detective-explainer strong{color:#f3fbff}
