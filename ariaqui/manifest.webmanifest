@@ -15,5 +15,6 @@
       "sizes": "any",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "description": "GPS, AQI, PM10, PM2.5, monitoraggio PM1/UFP quando disponibile, centraline ARPAE, UV e dati ambientali"
 }
