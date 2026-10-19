@@ -30,3 +30,8 @@ body.darkmode .grade-card{--paper:#392e29;background:linear-gradient(145deg,#403
 body.darkmode .grade-chip{color:#2f261f}body.darkmode .grade-tap,body.darkmode .grade-desc,body.darkmode .mini-scale-guide{color:#e1cbb8}
 body.darkmode .mini-scale-guide{background:#3c312b;border-color:#695043}
 @media(max-width:650px){.grade-chip{font-size:9px;padding:4px 6px}.grade-tap{font-size:9px}.grade-desc{font-size:9px}.score-dialog-body{padding:18px}.advcard.grade-card{min-height:143px}}
+
+/* Single, legible indicator bar; the legacy AQI-only bar is replaced. */
+.pollutant.grade-card > .bar{display:none}
+.radiocard.grade-card > .grade-chip{margin-top:10px}
+.nano-card.grade-card > .grade-chip{margin:8px 0}
