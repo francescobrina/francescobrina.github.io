@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-title" content="AriaQui">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon.svg">
-  <link rel="icon" href="icons/icon.svg" type="image/png">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <title>AriaQui — Respira, con i dati.</title>
   <style>
     :root{font-family:ui-rounded,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#272322;background:#fcf7ef;font-synthesis:none;--ink:#272322;--muted:#81746a;--line:#eadfd2;--cream:#fcf7ef;--paper:#fffdf9;--orange:#ff8852;--tangerine:#fb6f39;--peach:#ffdfba;--shadow:0 12px 32px rgba(79,51,29,.09);--good:#13a876;--fair:#8dbd47;--mid:#eab73e;--poor:#f28d40;--bad:#e45862;--critical:#9660c8}
@@ -51,6 +51,28 @@
     @media(max-width:375px){.heroinner{grid-template-columns:1fr 128px}.aqiorb{width:132px}.herohead{font-size:26px}.herolead{font-size:10px}.radiogrid{grid-template-columns:1fr}.polsymbol{font-size:23px}}
     @media(prefers-reduced-motion:no-preference){.brandicon{animation:sway 8s ease-in-out infinite}@keyframes sway{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(3deg)}}}
     @media(prefers-color-scheme:dark){body.darkmode{filter:none;background:#241e1b;color:#fff3ea}body.darkmode .card,body.darkmode .sourcebox,body.darkmode .radiocard,body.darkmode .forecast,body.darkmode .locationbar,body.darkmode .advcard{background:#372d29;color:#fff3ea;border-color:#58463e}body.darkmode .sectionhead p,body.darkmode .polname,body.darkmode .polvalue small,body.darkmode .tiny,body.darkmode .polextra,body.darkmode .sourcebox p,body.darkmode .sourcefoot,body.darkmode .radiocard p{color:#d1b6a4}body.darkmode .sectionhead h2{color:#fff5e9}body.darkmode .topright span{color:#e1baa0}}
+
+    /* AriaQui v5.3 · ultrafine explorer */
+    .nano-panel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+    .nano-card{position:relative;overflow:hidden;padding:20px;border:1.5px solid #e9d7c7;border-radius:24px;background:#fffdf9;box-shadow:var(--shadow);min-width:0}
+    .nano-card:after{content:"";position:absolute;width:178px;height:178px;border:2px dashed #e89c6970;border-radius:50%;right:-68px;top:24px;pointer-events:none}
+    .nano-card.ufp{background:linear-gradient(135deg,#fff3e7,#fffdfa 75%)}
+    .nano-card.pm1{background:linear-gradient(135deg,#fff4e2,#fffdfa 72%)}
+    .nano-eyebrow{font-size:10px;letter-spacing:.08em;font-weight:950;text-transform:uppercase;color:#aa572e}
+    .nano-pill{display:inline-block;padding:5px 8px;border-radius:100px;border:1px solid #e7c3ae;color:#8b4b2c;font-size:10px;font-weight:900;background:#ffebd9;margin:7px 0 0}
+    .nano-card h3{font-size:34px;letter-spacing:-.075em;font-weight:950;margin:15px 0 4px}
+    .nano-card h3 sub{font-size:16px;vertical-align:baseline;position:relative;bottom:-.18em}
+    .nano-measure{font-size:30px;letter-spacing:-.045em;font-weight:950}.nano-measure small{font-size:11px;letter-spacing:0;color:#846c59;font-weight:750}
+    .nano-card p{font-size:12px;color:#735f52;line-height:1.55;max-width:95%}
+    .nano-source{background:#fffaf3;border:1px solid #e9dbce;border-radius:13px;padding:12px;margin:15px 0 10px;font-size:12px;line-height:1.55;position:relative;z-index:1}
+    .nano-source strong{display:block;font-weight:900;margin-bottom:5px}
+    .nano-source span{display:block;color:#785f50}
+    .nano-link{border:0;background:transparent;padding:6px 2px;color:#b8562c;font-size:12px;font-weight:900;text-decoration:underline;text-underline-offset:3px}
+    .nano-note{margin-top:11px;padding:12px 14px;border-radius:16px;border:1px solid #e9d8bf;background:#fff6e8;color:#785c48;font-size:11px;line-height:1.55}
+    body.darkmode .nano-card{background:#382e29;border-color:#665041;color:#f9e5d8}
+    body.darkmode .nano-card p,body.darkmode .nano-source span,body.darkmode .nano-measure small{color:#ead0bd}
+    body.darkmode .nano-source,body.darkmode .nano-note{background:#45382f;color:#f8e3cf;border-color:#6a5040}
+    @media(max-width:650px){.nano-panel{grid-template-columns:1fr}.nano-card{padding:17px}.nano-card h3{margin-top:9px}}
   </style>
 </head>
 <body>
@@ -67,10 +89,31 @@
    <div class="herobottom"><span class="tag" id="dataType">◉ Fonte: modello CAMS</span><span class="tag" id="lastUpdated">◷ Nessun dato</span><span class="tag" id="dominant">⚑ Dominante: —</span></div>
   </section>
   <section class="section" id="pollutants"><div class="sectionhead"><div><h2>Cosa respiri? <span aria-hidden="true">✳</span></h2><p>Concentrazioni orarie modellate · valori non misurati dal telefono</p></div><small class="tiny">µg/m³</small></div><div class="cards" id="coreCards"></div><div class="insight"><span class="insighticon" aria-hidden="true">✳</span><div><strong id="adviceTitle">Il consiglio di AriaQui</strong><p id="advice">Il giudizio viene mostrato solo quando sono disponibili dati aggiornati.</p></div></div></section>
+
+  <section class="section" id="ultrafines" aria-label="PM1 e particelle ultrafini">
+   <div class="sectionhead"><div><h2>Le invisibili <span aria-hidden="true">◌</span></h2><p>PM₁ e nanoparticelle: dimensioni diverse, metodi diversi, niente numeri inventati.</p></div></div>
+   <div class="nano-panel">
+    <article class="nano-card pm1">
+     <div class="nano-eyebrow">01 · PARTICOLATO FINE</div><span class="nano-pill">MISURA SPECIALISTICA</span>
+     <h3>PM<sub>1</sub></h3><div class="nano-measure" aria-label="PM1 non disponibile">N/D <small>µg/m³</small></div>
+     <p>Particelle con diametro fino a 1 micrometro: in genere misurate come concentrazione di massa. Non sono una variabile della normale API Open-Meteo/CAMS.</p>
+     <div class="nano-source"><strong>Centraline ARPAE che dichiarano PM1</strong><span id="pm1StationStatus" role="status">Verifica dell'anagrafe ARPAE in corso…</span></div>
+     <button class="nano-link" id="nanoFindPm1" type="button">Trova centraline PM1 ↗</button>
+    </article>
+    <article class="nano-card ufp">
+     <div class="nano-eyebrow">02 · PARTICELLE ULTRAFINI</div><span class="nano-pill">NON COPERTE DALL'AQI</span>
+     <h3>PM<sub>0.1</sub> / UFP</h3><div class="nano-measure" aria-label="Concentrazione ultrafini non disponibile">N/D <small>particelle/cm³ · UFP</small></div>
+     <p>Dimensioni inferiori a 100 nanometri. Le UFP si caratterizzano spesso con il <b>numero</b> di particelle/cm³; non va confuso con la <b>massa</b> della frazione PM0.1.</p>
+     <div class="nano-source"><strong>Monitoraggio per la tua posizione</strong><span>Non è stato verificato un flusso pubblico in tempo reale di particelle ultrafini per il punto GPS. “N/D” non significa zero o assenza di rischio.</span></div>
+     <a class="nano-link" href="https://www.arpae.it/it/temi-ambientali/aria/scopri-di-piu/progetti-speciali/progetto-supersito" target="_blank" rel="noopener noreferrer">Ricerca ufficiale ARPAE Supersito ↗</a>
+    </article>
+   </div>
+   <div class="nano-note">◉ Fonte dati principale: Copernicus CAMS (PM₂.₅ e PM₁₀ modellati). Per PM₁ e UFP/PM₀.₁ sono necessari strumenti specifici. La presenza del parametro nell'anagrafe ARPAE <b>non</b> equivale alla disponibilità di una misura in tempo reale e non fornisce un punteggio sanitario comparabile all'AQI europeo. <a class="inline" href="https://open-meteo.com/en/docs/air-quality-api" target="_blank" rel="noopener noreferrer">Variabili API ↗</a></div>
+  </section>
   <section class="section" id="forecast"><div class="sectionhead"><div><h2>Il cielo tra un po' <span aria-hidden="true">☼</span></h2><p>Previsione AQI delle prossime 18 ore</p></div></div><div class="forecast"><div class="chart" id="forecastChart"><div class="tiny">Previsione in caricamento…</div></div><div class="chartlegend"><span>Ora → prossime ore</span><strong id="forecastMax">—</strong></div></div></section>
   <section class="section" id="advanced"><div class="sectionhead"><div><h2>Modalità detective <span aria-hidden="true">⌁</span></h2><p>Inquinanti speciali, combustione, polveri, sostanze atmosferiche · CAMS</p></div></div><div class="tabstrip" role="tablist" aria-label="Tipo di contaminanti"><button class="pill active" data-filter="all">Tutti</button><button class="pill" data-filter="industry">Industria e gas</button><button class="pill" data-filter="dust">Polveri sottili</button><button class="pill" data-filter="pollen">Pollini</button><button class="pill" data-filter="unavailable">Non misurabili</button></div><div class="advanced" id="advCards"></div></section>
   <section class="section" id="sources"><div class="sectionhead"><div><h2>Chi sta misurando? <span aria-hidden="true">⌖</span></h2><p>Posizione GPS, griglia modellistica e centraline: tre cose diverse</p></div></div><div class="sourcegrid"><article class="sourcebox"><h3>◎ I dati del tuo punto</h3><p>Open-Meteo usa previsioni modellistiche Copernicus CAMS, non un sensore situato accanto al telefono.</p><div class="sourcerow"><span class="bullet"></span><span id="gpsCoords">GPS: non acquisito</span></div><div class="sourcerow"><span class="bullet"></span><span id="modelCoords">Cella modello: —</span></div><div class="sourcerow"><span class="bullet"></span><span id="gpsQuality">Precisione posizione: —</span></div><div class="mini-map"><div class="minimap-pin" id="mapCaption">⌖ Il tuo punto sulla mappa</div></div><div class="inlineactions"><a id="mapLink" class="inline" href="https://www.openstreetmap.org" target="_blank" rel="noopener noreferrer">Apri mappa ↗</a><a href="https://open-meteo.com/en/docs/air-quality-api" class="inline" target="_blank" rel="noopener noreferrer">Metodo CAMS ↗</a></div></article>
-   <article class="sourcebox"><h3>▣ Centraline vere · Arpae</h3><p>Elenco geografico ufficiale delle stazioni dell'Emilia-Romagna. Puoi scegliere una centralina e interrogare il <b>modello</b> in quel punto, ma non confondere i valori modellati con quelli rilevati dal sensore.</p><label for="stationSelect" class="fieldlabel">Centralina di riferimento</label><select id="stationSelect" class="stationselect"><option value="">Caricamento elenco centraline…</option></select><div class="sourcefoot" id="stationDetails">Sto cercando le centraline ufficiali Arpae.</div><div class="inlineactions"><button class="btn btn-ghost" id="stationModel" disabled>Vedi modello lì</button><button class="btn btn-light" id="returnGps" disabled>Torna al GPS</button></div><div class="inlineactions"><a href="https://www.arpae.it/it/temi-ambientali/aria/dati-qualita-aria/stazioni-fisse" class="inline" target="_blank" rel="noopener noreferrer">Misurazioni ufficiali Arpae ↗</a></div></article></div></section>
+   <article class="sourcebox"><h3>▣ Centraline vere · Arpae</h3><p>Elenco geografico ufficiale delle stazioni dell'Emilia-Romagna. Puoi scegliere una centralina e interrogare il <b>modello</b> in quel punto, ma non confondere i valori modellati con quelli rilevati dal sensore.</p><label for="stationSelect" class="fieldlabel">Centralina di riferimento</label><button type="button" id="pm1StationFilter" class="nano-link" aria-pressed="false">◉ Filtra solo stazioni con PM1</button><select id="stationSelect" class="stationselect"><option value="">Caricamento elenco centraline…</option></select><div class="sourcefoot" id="stationDetails">Sto cercando le centraline ufficiali Arpae.</div><div class="inlineactions"><button class="btn btn-ghost" id="stationModel" disabled>Vedi modello lì</button><button class="btn btn-light" id="returnGps" disabled>Torna al GPS</button></div><div class="inlineactions"><a href="https://www.arpae.it/it/temi-ambientali/aria/dati-qualita-aria/stazioni-fisse" class="inline" target="_blank" rel="noopener noreferrer">Misurazioni ufficiali Arpae ↗</a></div></article></div></section>
   <section class="section" id="radiation"><div class="sectionhead"><div><h2>Raggi e radiazioni <span aria-hidden="true">☀</span></h2><p>Raggi ultravioletti e radioattività gamma: due fenomeni distinti</p></div></div><div class="radiogrid"><article class="radiocard"><div class="radiotop"><div class="radioicon">☀</div><span class="chip" id="uvLevel">UV · —</span></div><h3>Indice UV solare</h3><div class="radioVal"><span id="uvValue">—</span> <small>indice UV</small></div><p>Radiazione ultravioletta non ionizzante · stima CAMS. Un UV elevato richiede fotoprotezione.</p></article><article class="radiocard"><div class="radiotop"><div class="radioicon">☢</div><span class="chip">EURDEP · JRC</span></div><h3>Radioattività ambientale γ</h3><div class="radioVal missing">N/D <small>dose gamma</small></div><p>Il telefono non misura radiazioni ionizzanti. Senza un flusso dati verificato non mostriamo numeri inventati. Consulta la rete ufficiale europea.</p><a class="inline" href="https://remap.jrc.ec.europa.eu/" target="_blank" rel="noopener noreferrer">Apri le misure gamma ufficiali ↗</a></article></div></section>
   <section class="section"><div class="caution"><b>Un'app, non un laboratorio.</b> I dati CAMS sono stime atmosferiche, non misurazioni stradali. Microplastiche/nanoplastiche, PFAS, diossine, stirene, benzene, metalli pesanti e radon indoor richiedono misure o analisi dedicate. Quando non ci sono dati, AriaQui indica <b>N/D</b>, non zero. L'indice AQI è una classificazione a breve termine, non una diagnosi o una prova di sicurezza sanitaria.</div></section>
   <footer class="footer">AriaQui · Dati modellati: Open-Meteo / Copernicus CAMS · Anagrafe centraline: Arpae Emilia-Romagna · Gamma: JRC / EURDEP. Aggiornamento manuale e ogni 15 minuti mentre l'app è aperta. Nessun GPS inviato a un server AriaQui. <button class="linkbtn" id="diagBtn">Diagnostica GPS</button></footer>
@@ -117,6 +160,8 @@ const ADV=[
  {key:'olive_pollen',title:'Polline olivo',group:'pollen',desc:'Previsione stagionale europea',unit:'grani/m³'},
  {key:'mugwort_pollen',title:'Polline artemisia',group:'pollen',desc:'Previsione stagionale europea',unit:'grani/m³'},
  {key:'ragweed_pollen',title:'Polline ambrosia',group:'pollen',desc:'Previsione stagionale europea',unit:'grani/m³'},
+ {key:'pm1_no_data',title:'PM₁ · particelle fino a 1 µm',group:'unavailable',desc:'Non disponibile in CAMS. Cerca una centralina specialistica.',unit:'µg/m³'},
+ {key:'ufp_no_data',title:'PM₀.₁ / UFP · sotto 100 nm',group:'unavailable',desc:'Dato non disponibile. UFP: conteggio per cm³, non AQI.',unit:'particelle/cm³'},
  {key:'microplastics',title:'Microplastiche',group:'unavailable',desc:'Serve campionamento specifico',unit:''},
  {key:'nanoplastics',title:'Nanoplastiche',group:'unavailable',desc:'Serve analisi specialistica',unit:''},
  {key:'benzene',title:'Benzene',group:'unavailable',desc:'Servono stazioni dedicate',unit:''},
@@ -137,7 +182,7 @@ const LEVELS=[
  {max:100,label:'Molto scarsa',color:'#df4e5d',face:'☹',advice:'Riduci l’attività fisica all’aperto. Per i gruppi sensibili è opportuno evitare sforzi intensi.'},
  {max:Infinity,label:'Estremamente scarsa',color:'#9555c1',face:'!',advice:'Evita o limita fortemente gli sforzi fisici all’aperto, soprattutto nei gruppi vulnerabili.'}
 ];
-let gpsPos=null, activePos=null, selectedStation=null, stations=[], data=null, currentMode='gps', activeRequest=0, gpsWatch=null, lastAtmosphereFetch=0, forecastIndex=0, activeFilter='all', lastLocationError='—', permissionState='sconosciuto', demo=false;
+let gpsPos=null, activePos=null, selectedStation=null, stations=[], data=null, currentMode='gps', activeRequest=0, gpsWatch=null, lastAtmosphereFetch=0, forecastIndex=0, activeFilter='all', lastLocationError='—', permissionState='sconosciuto', demo=false, pmOnly=false, stationLoadError=false;
 const today=()=>new Intl.DateTimeFormat('it-IT',{day:'numeric',month:'short',year:'numeric'}).format(new Date());
 $('dateTop').textContent=today().toUpperCase();
 function safeNum(v){return typeof v==='number'&&Number.isFinite(v)?v:null}
@@ -199,15 +244,38 @@ function renderForecast(j,start){const cont=$('forecastChart');cont.replaceChild
  const hour=document.createElement('small');hour.textContent=n%3===0?times[i].slice(11,13)+'h':'·';item.append(bar,hour);cont.append(item);n++;if(v!==null&&(peak===null||v>peak))peak=v;
  }$('forecastMax').textContent=peak===null?'Previsione non disponibile':`Picco previsto: ${Math.round(peak)} AQI`;
 }
+
+function hasPm1(s){return /\bPM1\b/i.test(s?.params||'')}
+function updateParticleAvailability(){
+ const node=$('pm1StationStatus');if(!node)return;
+ if(stationLoadError){node.textContent="Elenco centraline momentaneamente non accessibile. La disponibilità PM1 non è verificabile.";return}
+ if(!stations.length){node.textContent="Elenco delle centraline ancora in caricamento.";return}
+ const found=stations.filter(hasPm1),center=gpsPos||activePos;
+ if(!found.length){node.textContent="Nessuna stazione con PM1 individuata nell'anagrafe caricata. Nessuna misura PM1 disponibile qui.";return}
+ found.sort((a,b)=>center?km(center.lat,center.lon,a.lat,a.lon)-km(center.lat,center.lon,b.lat,b.lon):a.name.localeCompare(b.name));
+ const closest=found[0],dist=center?" · "+fmt(km(center.lat,center.lon,closest.lat,closest.lon),1)+" km dal punto":"";
+ node.textContent=found.length+" stazione/i con parametro PM1 censito. Più vicina: "+closest.name+" ("+closest.province+")"+dist+". Nessuna lettura PM1 in diretta verificata.";
+}
+$('nanoFindPm1').addEventListener('click',()=>{
+ pmOnly=true;selectedStation=null;$('stationModel').disabled=true;
+ $('pm1StationFilter').setAttribute('aria-pressed','true');$('pm1StationFilter').textContent='✓ Solo PM1 · mostra tutte';
+ sortStationOptions();$('sources').scrollIntoView({behavior:'smooth',block:'start'});
+});
+$('pm1StationFilter').addEventListener('click',()=>{
+ pmOnly=!pmOnly;selectedStation=null;$('stationModel').disabled=true;
+ $('pm1StationFilter').setAttribute('aria-pressed',String(pmOnly));$('pm1StationFilter').textContent=pmOnly?'✓ Solo PM1 · mostra tutte':'◉ Filtra solo stazioni con PM1';
+ sortStationOptions();
+});
 function stationValue(f,...keys){for(let k of keys){if(f[k]!==undefined&&f[k]!==null)return f[k]}return null}
 async function loadStations(){
  let url=new URL(STATIONS);url.searchParams.set('where','1=1');url.searchParams.set('outFields','ID_STAZ,NOME_STAZ,LATITUDINE,LONGITUDIN,PROVINCIA,TIPOSTAZ,TIPOZONA,PARAMETRI');url.searchParams.set('returnGeometry','false');url.searchParams.set('f','json');url.searchParams.set('resultRecordCount','300');
  try{let r=await fetch(url,{headers:{Accept:'application/json'}});if(!r.ok)throw Error('HTTP '+r.status);let json=await r.json();if(!Array.isArray(json.features))throw Error('Risposta senza elenco centraline');stations=json.features.map(x=>x.attributes||{}).map(f=>({id:stationValue(f,'ID_STAZ'),name:String(stationValue(f,'NOME_STAZ')||'Senza nome'),lat:Number(stationValue(f,'LATITUDINE')),lon:Number(stationValue(f,'LONGITUDIN')),province:String(stationValue(f,'PROVINCIA')||''),type:String(stationValue(f,'TIPOSTAZ')||'N/D'),zone:String(stationValue(f,'TIPOZONA')||''),params:String(stationValue(f,'PARAMETRI')||'non elencati')})).filter(x=>Number.isFinite(x.lat)&&Number.isFinite(x.lon)&&x.lat>43&&x.lat<47&&x.lon>8&&x.lon<14);
- if(!stations.length)throw Error('Nessuna coordinata valida');sortStationOptions();
- }catch(e){$('stationSelect').replaceChildren(new Option('Elenco Arpae temporaneamente non accessibile',''));$('stationDetails').textContent=`Non posso verificare l’elenco via browser (${e.message}). Usa il collegamento ufficiale Arpae. Il modello GPS resta disponibile.`;stations=[]}
+ if(!stations.length)throw Error('Nessuna coordinata valida');stationLoadError=false;sortStationOptions();
+ }catch(e){$('stationSelect').replaceChildren(new Option('Elenco Arpae temporaneamente non accessibile',''));$('stationDetails').textContent=`Non posso verificare l’elenco via browser (${e.message}). Usa il collegamento ufficiale Arpae. Il modello GPS resta disponibile.`;stations=[];stationLoadError=true;updateParticleAvailability()}
 }
 function sortStationOptions(){if(!stations.length)return;const active=selectedStation?.id;const sortCenter=gpsPos||activePos;
- stations.sort((a,b)=>sortCenter?(km(sortCenter.lat,sortCenter.lon,a.lat,a.lon)-km(sortCenter.lat,sortCenter.lon,b.lat,b.lon)):a.name.localeCompare(b.name));const sel=$('stationSelect');sel.replaceChildren(new Option('Seleziona una centralina…',''));for(const s of stations){const distance=sortCenter?` · ${fmt(km(sortCenter.lat,sortCenter.lon,s.lat,s.lon),1)} km`:'';sel.add(new Option(`${s.name} (${s.province})${distance}`,String(s.id)));}if(active!==null&&active!==undefined)sel.value=String(active);else{const nearest=stations[0];$('stationDetails').textContent=sortCenter?`Più vicina nell’elenco regionale: ${nearest.name} · ${fmt(km(sortCenter.lat,sortCenter.lon,nearest.lat,nearest.lon),1)} km. Non è detto che rilevi tutti gli inquinanti.`:'Seleziona una centralina e visualizza l’elenco dei parametri rilevati.';}
+ stations.sort((a,b)=>sortCenter?(km(sortCenter.lat,sortCenter.lon,a.lat,a.lon)-km(sortCenter.lat,sortCenter.lon,b.lat,b.lon)):a.name.localeCompare(b.name));const sel=$('stationSelect');sel.replaceChildren(new Option(pmOnly?'Centraline che dichiarano PM1…':'Seleziona una centralina…',''));for(const s of stations.filter(s=>!pmOnly||hasPm1(s))){const distance=sortCenter?` · ${fmt(km(sortCenter.lat,sortCenter.lon,s.lat,s.lon),1)} km`:'';sel.add(new Option(`${s.name} (${s.province})${distance}`,String(s.id)));}if(active!==null&&active!==undefined)sel.value=String(active);else{const nearest=stations.find(s=>!pmOnly||hasPm1(s));$('stationDetails').textContent=!nearest?'Nessuna centralina dell’elenco dichiara PM1: disattiva il filtro per vedere tutte le stazioni.':sortCenter?`Più vicina ${pmOnly?'con PM1 dichiarato ':''}nell’elenco regionale: ${nearest.name} · ${fmt(km(sortCenter.lat,sortCenter.lon,nearest.lat,nearest.lon),1)} km. Non è detto che rilevi tutti gli inquinanti.`:'Seleziona una centralina e visualizza l’elenco dei parametri rilevati.';}
+ updateParticleAvailability();
 }
 $('stationSelect').addEventListener('change',()=>{selectedStation=stations.find(s=>String(s.id)===$('stationSelect').value)||null;$('stationModel').disabled=!selectedStation;if(!selectedStation){$('stationDetails').textContent='Nessuna centralina selezionata';return}const dist=gpsPos?` · ${fmt(km(gpsPos.lat,gpsPos.lon,selectedStation.lat,selectedStation.lon),1)} km dal GPS`:'';$('stationDetails').textContent=`${selectedStation.type} · zona ${selectedStation.zone||'N/D'}${dist}. Parametri censiti: ${selectedStation.params}. Misurazioni strumentali: consulta Arpae.`});
 $('stationModel').addEventListener('click',()=>{if(selectedStation){selectPos({lat:selectedStation.lat,lon:selectedStation.lon,source:'station',name:selectedStation.name+' · stazione Arpae'},'station');document.getElementById('home').scrollIntoView({behavior:'smooth'})}});
