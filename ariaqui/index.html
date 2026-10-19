@@ -52,7 +52,7 @@
     @media(prefers-reduced-motion:no-preference){.brandicon{animation:sway 8s ease-in-out infinite}@keyframes sway{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(3deg)}}}
     @media(prefers-color-scheme:dark){body.darkmode{filter:none;background:#241e1b;color:#fff3ea}body.darkmode .card,body.darkmode .sourcebox,body.darkmode .radiocard,body.darkmode .forecast,body.darkmode .locationbar,body.darkmode .advcard{background:#372d29;color:#fff3ea;border-color:#58463e}body.darkmode .sectionhead p,body.darkmode .polname,body.darkmode .polvalue small,body.darkmode .tiny,body.darkmode .polextra,body.darkmode .sourcebox p,body.darkmode .sourcefoot,body.darkmode .radiocard p{color:#d1b6a4}body.darkmode .sectionhead h2{color:#fff5e9}body.darkmode .topright span{color:#e1baa0}}
 
-    /* AriaQui v5.3 · ultrafine explorer */
+    /* AriaQui v5.4 · ultrafine explorer */
     .nano-panel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
     .nano-card{position:relative;overflow:hidden;padding:20px;border:1.5px solid #e9d7c7;border-radius:24px;background:#fffdf9;box-shadow:var(--shadow);min-width:0}
     .nano-card:after{content:"";position:absolute;width:178px;height:178px;border:2px dashed #e89c6970;border-radius:50%;right:-68px;top:24px;pointer-events:none}
@@ -114,7 +114,7 @@
   <section class="section" id="advanced"><div class="sectionhead"><div><h2>Modalità detective <span aria-hidden="true">⌁</span></h2><p>Inquinanti speciali, combustione, polveri, sostanze atmosferiche · CAMS</p></div></div><div class="tabstrip" role="tablist" aria-label="Tipo di contaminanti"><button class="pill active" data-filter="all">Tutti</button><button class="pill" data-filter="industry">Industria e gas</button><button class="pill" data-filter="dust">Polveri sottili</button><button class="pill" data-filter="pollen">Pollini</button><button class="pill" data-filter="unavailable">Non misurabili</button></div><div class="advanced" id="advCards"></div></section>
   <section class="section" id="sources"><div class="sectionhead"><div><h2>Chi sta misurando? <span aria-hidden="true">⌖</span></h2><p>Posizione GPS, griglia modellistica e centraline: tre cose diverse</p></div></div><div class="sourcegrid"><article class="sourcebox"><h3>◎ I dati del tuo punto</h3><p>Open-Meteo usa previsioni modellistiche Copernicus CAMS, non un sensore situato accanto al telefono.</p><div class="sourcerow"><span class="bullet"></span><span id="gpsCoords">GPS: non acquisito</span></div><div class="sourcerow"><span class="bullet"></span><span id="modelCoords">Cella modello: —</span></div><div class="sourcerow"><span class="bullet"></span><span id="gpsQuality">Precisione posizione: —</span></div><div class="mini-map"><div class="minimap-pin" id="mapCaption">⌖ Il tuo punto sulla mappa</div></div><div class="inlineactions"><a id="mapLink" class="inline" href="https://www.openstreetmap.org" target="_blank" rel="noopener noreferrer">Apri mappa ↗</a><a href="https://open-meteo.com/en/docs/air-quality-api" class="inline" target="_blank" rel="noopener noreferrer">Metodo CAMS ↗</a></div></article>
    <article class="sourcebox"><h3>▣ Centraline vere · Arpae</h3><p>Elenco geografico ufficiale delle stazioni dell'Emilia-Romagna. Puoi scegliere una centralina e interrogare il <b>modello</b> in quel punto, ma non confondere i valori modellati con quelli rilevati dal sensore.</p><label for="stationSelect" class="fieldlabel">Centralina di riferimento</label><button type="button" id="pm1StationFilter" class="nano-link" aria-pressed="false">◉ Filtra solo stazioni con PM1</button><select id="stationSelect" class="stationselect"><option value="">Caricamento elenco centraline…</option></select><div class="sourcefoot" id="stationDetails">Sto cercando le centraline ufficiali Arpae.</div><div class="inlineactions"><button class="btn btn-ghost" id="stationModel" disabled>Vedi modello lì</button><button class="btn btn-light" id="returnGps" disabled>Torna al GPS</button></div><div class="inlineactions"><a href="https://www.arpae.it/it/temi-ambientali/aria/dati-qualita-aria/stazioni-fisse" class="inline" target="_blank" rel="noopener noreferrer">Misurazioni ufficiali Arpae ↗</a></div></article></div></section>
-  <section class="section" id="radiation"><div class="sectionhead"><div><h2>Raggi e radiazioni <span aria-hidden="true">☀</span></h2><p>Raggi ultravioletti e radioattività gamma: due fenomeni distinti</p></div></div><div class="radiogrid"><article class="radiocard"><div class="radiotop"><div class="radioicon">☀</div><span class="chip" id="uvLevel">UV · —</span></div><h3>Indice UV solare</h3><div class="radioVal"><span id="uvValue">—</span> <small>indice UV</small></div><p>Radiazione ultravioletta non ionizzante · stima CAMS. Un UV elevato richiede fotoprotezione.</p></article><article class="radiocard"><div class="radiotop"><div class="radioicon">☢</div><span class="chip">EURDEP · JRC</span></div><h3>Radioattività ambientale γ</h3><div class="radioVal missing">N/D <small>dose gamma</small></div><p>Il telefono non misura radiazioni ionizzanti. Senza un flusso dati verificato non mostriamo numeri inventati. Consulta la rete ufficiale europea.</p><a class="inline" href="https://remap.jrc.ec.europa.eu/" target="_blank" rel="noopener noreferrer">Apri le misure gamma ufficiali ↗</a></article></div></section>
+  <section class="section" id="radiation"><div class="sectionhead"><div><h2>Raggi e radiazioni <span aria-hidden="true">☀</span></h2><p>Raggi ultravioletti e radioattività gamma: due fenomeni distinti</p></div></div><div class="radiogrid"><article class="radiocard"><div class="radiotop"><div class="radioicon">☀</div><span class="chip" id="uvLevel">UV · —</span></div><h3>Indice UV solare</h3><div class="radioVal"><span id="uvValue">—</span> <small>indice UV</small></div><p>Radiazione ultravioletta non ionizzante · stima CAMS. Un UV elevato richiede fotoprotezione.</p></article><article class="radiocard"><div class="radiotop"><div class="radioicon">☢</div><span class="chip">EURDEP · JRC</span></div><h3>Radioattività ambientale γ</h3><div class="radioVal" id="gammaReadout"><span id="gammaValue">—</span> <small id="gammaUnit">µSv/h</small></div><p id="gammaStatus" role="status" aria-live="polite">Cerco misure gamma reali EURDEP…</p><label class="fieldlabel" for="gammaStation">Scegli centralina gamma</label><select id="gammaStation" class="stationselect"><option>Caricamento stazioni italiane…</option></select><div id="gammaMeta" class="sourcefoot">Stazione, distanza GPS, ora e validazione in caricamento.</div><div class="inlineactions"><button id="gammaRefresh" class="btn btn-light" type="button">↻ Aggiorna</button><a class="inline" href="https://remap.jrc.ec.europa.eu/" target="_blank" rel="noopener noreferrer">Mappa EURDEP ↗</a></div><p class="sourcefoot">Misure presso centraline, non sul telefono. Fonte: BfS (Germania), dati EURDEP. Possono essere preliminari. Non è un servizio di allerta radiologica.</p></article></div></section>
   <section class="section"><div class="caution"><b>Un'app, non un laboratorio.</b> I dati CAMS sono stime atmosferiche, non misurazioni stradali. Microplastiche/nanoplastiche, PFAS, diossine, stirene, benzene, metalli pesanti e radon indoor richiedono misure o analisi dedicate. Quando non ci sono dati, AriaQui indica <b>N/D</b>, non zero. L'indice AQI è una classificazione a breve termine, non una diagnosi o una prova di sicurezza sanitaria.</div></section>
   <footer class="footer">AriaQui v5.3 · Dati modellati: Open-Meteo / Copernicus CAMS · Anagrafe centraline: Arpae Emilia-Romagna · Gamma: JRC / EURDEP. Aggiornamento manuale e ogni 15 minuti mentre l'app è aperta. Nessun GPS inviato a un server AriaQui. <button class="linkbtn" id="diagBtn">Diagnostica GPS</button></footer>
  </div>
@@ -127,6 +127,7 @@
 const $=id=>document.getElementById(id), $$=s=>Array.from(document.querySelectorAll(s));
 const API='https://air-quality-api.open-meteo.com/v1/air-quality';
 const STATIONS='https://servizi-gis.arpae.it/server/rest/services/Geoportal/ARIAQualita/MapServer/0/query';
+const GAMMA_API='https://www.imis.bfs.de/ogc/opendata/ows';
 const CITY_API='https://geocoding-api.open-meteo.com/v1/search';
 const CORE=[
  {key:'pm2_5',symbol:'PM₂.₅',name:'Polveri ultrafini respirabili*',aqi:'european_aqi_pm2_5',desc:'Particelle ≤2,5 µm'},
@@ -182,7 +183,7 @@ const LEVELS=[
  {max:100,label:'Molto scarsa',color:'#df4e5d',face:'☹',advice:'Riduci l’attività fisica all’aperto. Per i gruppi sensibili è opportuno evitare sforzi intensi.'},
  {max:Infinity,label:'Estremamente scarsa',color:'#9555c1',face:'!',advice:'Evita o limita fortemente gli sforzi fisici all’aperto, soprattutto nei gruppi vulnerabili.'}
 ];
-let gpsPos=null, activePos=null, selectedStation=null, stations=[], data=null, currentMode='gps', activeRequest=0, gpsWatch=null, lastAtmosphereFetch=0, forecastIndex=0, activeFilter='all', lastLocationError='—', permissionState='sconosciuto', demo=false, pmOnly=false, stationLoadError=false;
+let gpsPos=null, activePos=null, selectedStation=null, stations=[], data=null, currentMode='gps', activeRequest=0, gpsWatch=null, lastAtmosphereFetch=0, forecastIndex=0, activeFilter='all', lastLocationError='—', permissionState='sconosciuto', demo=false, pmOnly=false, stationLoadError=false, gammaStations=[], gammaChosenId='', gammaUpdated=0, gammaPending=false;
 const today=()=>new Intl.DateTimeFormat('it-IT',{day:'numeric',month:'short',year:'numeric'}).format(new Date());
 $('dateTop').textContent=today().toUpperCase();
 function safeNum(v){return typeof v==='number'&&Number.isFinite(v)?v:null}
@@ -199,7 +200,7 @@ async function reversePlace(pos){ // Non bloccare la richiesta di qualità dell'
 }
 function selectPos(pos,mode='gps'){
  if(!(Number.isFinite(pos?.lat)&&Number.isFinite(pos?.lon)&&Math.abs(pos.lat)<=90&&Math.abs(pos.lon)<=180))return;
- activePos=pos;currentMode=mode;displayPlace(pos);sortStationOptions();fetchAir(pos);if(mode==='gps')reversePlace(pos);
+ activePos=pos;currentMode=mode;displayPlace(pos);sortStationOptions();fetchAir(pos);renderGamma();if(mode==='gps')reversePlace(pos);
  if(mode==='station')showNotice('Modello presso una centralina','Hai scelto la posizione di una stazione reale: i valori mostrati restano previsioni CAMS sul punto selezionato e NON sono letture strumentali della centralina.');
  else if(mode!=='gps')showNotice('Posizione cercata', 'I dati sono stimati sulla griglia atmosferica della località selezionata.');
  else hideNotice();
@@ -266,6 +267,50 @@ $('pm1StationFilter').addEventListener('click',()=>{
  $('pm1StationFilter').setAttribute('aria-pressed',String(pmOnly));$('pm1StationFilter').textContent=pmOnly?'✓ Solo PM1 · mostra tutte':'◉ Filtra solo stazioni con PM1';
  sortStationOptions();
 });
+
+function gammaPoint(){return gpsPos||activePos||{lat:44.8378,lon:11.6197}}
+function gammaDistance(g){const p=gammaPoint();return km(p.lat,p.lon,g.lat,g.lon)}
+function gammaRenderError(message){$('gammaValue').textContent='N/D';$('gammaUnit').textContent='';$('gammaStatus').textContent=message;$('gammaMeta').textContent='Nessuna misura disponibile: N/D non significa zero.';$('gammaStation').replaceChildren(new Option('Dati non disponibili',''))}
+function renderGamma(){
+ if(!gammaStations.length)return;
+ const list=[...gammaStations].sort((a,b)=>gammaDistance(a)-gammaDistance(b));
+ const station=list.find(x=>x.id===gammaChosenId)||list[0];
+ const sel=$('gammaStation');sel.replaceChildren();list.forEach(x=>sel.add(new Option(x.name+' · '+fmt(gammaDistance(x),1)+' km',x.id)));sel.value=station.id;
+ const time=Date.parse(station.time),age=(Date.now()-time)/3600000;
+ const valid=Number.isFinite(station.value)&&station.value>=0&&station.unit.toLowerCase().includes('sv/h');
+ $('gammaValue').textContent=valid?fmt(station.value,3):'N/D';$('gammaUnit').textContent=valid?station.unit:'';
+ $('gammaStatus').textContent=valid?'Misura strumentale · '+station.name+(age>24?' · OLTRE 24 ORE FA':age>6?' · dato non recente':' · dato recente'):'Unità non riconosciuta';
+ const when=new Intl.DateTimeFormat('it-IT',{dateStyle:'short',timeStyle:'short',timeZone:'Europe/Rome'}).format(new Date(time));
+ $('gammaMeta').textContent=station.name+' ['+station.id+'] · '+fmt(gammaDistance(station),1)+' km '+(gpsPos?'dal GPS':activePos?'dalla posizione selezionata':'dal centro di Ferrara, in attesa del GPS')+' · '+when+' · validazione: '+(station.validated===2?'codice 2':station.validated===1?'codice 1':station.validated===0?'non validata':'non dichiarata')+'.';
+}
+async function fetchGamma(force=false){
+ if(gammaPending)return;
+ if(!force&&Date.now()-gammaUpdated<15*60*1000&&gammaStations.length){renderGamma();return}
+ gammaPending=true;$('gammaRefresh').disabled=true;$('gammaStatus').textContent='Carico le misure EURDEP dal servizio BfS…';
+ const url=new URL(GAMMA_API);
+ Object.entries({service:'WFS',version:'2.0.0',request:'GetFeature',typeNames:'opendata:eurdep_latestValue',outputFormat:'application/json',count:'500',CQL_FILTER:"id LIKE 'IT%'"}).forEach(([k,v])=>url.searchParams.set(k,v));
+ const ctrl=new AbortController(),timeout=setTimeout(()=>ctrl.abort(),24000);
+ try{
+  const r=await fetch(url,{signal:ctrl.signal,mode:'cors',cache:'no-store'});
+  if(!r.ok)throw Error('HTTP '+r.status);
+  const body=await r.json();if(!Array.isArray(body.features))throw Error('Formato inatteso');
+  const map=new Map();
+  for(const f of body.features){
+   const p=f.properties||{},c=f.geometry?.coordinates;
+   if(!c||!/^IT\w+$/.test(String(p.id||''))||!Number.isFinite(Number(c[0]))||!Number.isFinite(Number(c[1])))continue;
+   const v=Number(p.value),time=Date.parse(p.end_measure);
+   if(p.value==null||!Number.isFinite(v)||v<0||!Number.isFinite(time))continue;
+   const g={id:String(p.id),name:String(p.name||p.id),lon:Number(c[0]),lat:Number(c[1]),value:v,time:p.end_measure,unit:String(p.unit||''),validated:Number(p.validated),range:Number(p.analyzed_range_in_h)||9999};
+   const prior=map.get(g.id);if(!prior||time>Date.parse(prior.time)||(g.time===prior.time&&g.range<prior.range))map.set(g.id,g);
+  }
+  gammaStations=[...map.values()];if(!gammaStations.length)throw Error('Nessuna stazione disponibile');
+  gammaUpdated=Date.now();renderGamma();
+ }catch(e){gammaStations=[];gammaRenderError('Servizio non accessibile dal browser (rete, CORS o timeout). Consulta la mappa EURDEP e riprova.');}
+ finally{clearTimeout(timeout);gammaPending=false;$('gammaRefresh').disabled=false}
+}
+$('gammaRefresh').addEventListener('click',()=>fetchGamma(true));
+$('gammaStation').addEventListener('change',()=>{gammaChosenId=$('gammaStation').value;renderGamma()});
+
 function stationValue(f,...keys){for(let k of keys){if(f[k]!==undefined&&f[k]!==null)return f[k]}return null}
 async function loadStations(){
  let url=new URL(STATIONS);url.searchParams.set('where','1=1');url.searchParams.set('outFields','ID_STAZ,NOME_STAZ,LATITUDINE,LONGITUDIN,PROVINCIA,TIPOSTAZ,TIPOZONA,PARAMETRI');url.searchParams.set('returnGeometry','false');url.searchParams.set('f','json');url.searchParams.set('resultRecordCount','300');
@@ -302,11 +347,11 @@ $$('.dock button').forEach(btn=>btn.addEventListener('click',()=>{$$('.dock butt
 $('themeBtn').addEventListener('click',()=>{document.body.classList.toggle('darkmode');try{localStorage.setItem('ariaqui:theme',document.body.classList.contains('darkmode')?'dark':'light')}catch(_){}});
 async function searchCity(){const q=$('cityInput').value.trim();const root=$('cityMatches');root.replaceChildren();if(q.length<2){root.textContent='Scrivi almeno due caratteri';return}const btn=$('citySearch');btn.disabled=true;root.textContent='Cerco la città…';try{const u=new URL(CITY_API);u.searchParams.set('name',q);u.searchParams.set('count','5');u.searchParams.set('language','it');u.searchParams.set('format','json');const r=await fetch(u);if(!r.ok)throw Error('HTTP '+r.status);const j=await r.json();root.replaceChildren();if(!j.results?.length){root.textContent='Nessuna città trovata';return}for(const city of j.results){let b=document.createElement('button');b.className='btn btn-light';b.style.cssText='width:100%;text-align:left;margin-top:8px;justify-content:flex-start';b.textContent=`⌖ ${city.name}, ${city.admin1||city.country||''}`;b.addEventListener('click',()=>{$('locationDialog').close();selectPos({lat:city.latitude,lon:city.longitude,name:`${city.name} · ${city.admin1||city.country||''}`,source:'city'},'city')});root.append(b)}}catch(e){root.textContent='Errore nella ricerca: '+e.message}finally{btn.disabled=false}}
 $('citySearch').addEventListener('click',searchCity);$('cityInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();searchCity()}});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&activePos&&Date.now()-lastAtmosphereFetch>15*60*1000)fetchAir(activePos)});setInterval(()=>{if(!document.hidden&&activePos&&Date.now()-lastAtmosphereFetch>15*60*1000)fetchAir(activePos)},60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){if(activePos&&Date.now()-lastAtmosphereFetch>15*60*1000)fetchAir(activePos);if(Date.now()-gammaUpdated>15*60*1000)fetchGamma()}});setInterval(()=>{if(!document.hidden&&activePos&&Date.now()-lastAtmosphereFetch>15*60*1000)fetchAir(activePos)},60000);
 async function start(){
  renderAdvanced(null,0);let cached=getCache();if(cached){activePos=cached.pos;displayPlace(activePos);data=cached.aq;forecastIndex=currentHour(data);render(data,true);showNotice('Ultima consultazione salvata','Questi dati provengono dalla memoria locale e potrebbero essere vecchi; provo ad aggiornare il GPS e il modello.')}
  try{if(localStorage.getItem('ariaqui:theme')==='dark')document.body.classList.add('darkmode')}catch(_){}
- await queryPermission();diagnose();loadStations();
+ await queryPermission();diagnose();loadStations();fetchGamma();
  if(insecure()||!window.isSecureContext){showNotice('Per il GPS apri la PWA su HTTPS','Una pagina content:// o file:// aperta da Download Android non è il sito dell’app. Pubblica questi file su GitHub Pages, Netlify o un sito HTTPS e apri l’indirizzo in Chrome: lì il browser può richiedere la posizione.');return}
  if(embedded()){showNotice('Anteprima incorporata','Se il popup posizione non compare, apri l’indirizzo HTTPS direttamente in Chrome o Safari. Le anteprime interne possono bloccare il GPS.')}
  askGps();
