@@ -15,7 +15,7 @@ def get(query):
             print("Richiesta:",server,flush=True)
             payload=parse.urlencode({"data":query}).encode()
             req=request.Request(server,data=payload,headers={"User-Agent":"Cassonetti-FE-OpenStreetMap-Importer/1.1","Accept":"application/json","Content-Type":"application/x-www-form-urlencoded"})
-            with request.urlopen(req,timeout=25) as response: data=json.load(response)
+            with request.urlopen(req,timeout=(80 if "overpass-api.de" in server else 18)) as response: data=json.load(response)
             if not data.get("elements"): raise ValueError("Nessun elemento")
             return data["elements"]
         except Exception as exc:
