@@ -1,0 +1,30 @@
+name: Aggiorna cassonetti Ferrara (OpenStreetMap)
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 2,5'
+  push:
+    paths:
+      - '.github/workflows/cassonetti-ferrara-data.yml'
+      - 'cassonetti-ferrara/scripts/sync_cassonetti.py'
+permissions:
+  contents: write
+jobs:
+  aggiorna:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+      - name: Recupera le coordinate reali da OSM
+        run: python3 cassonetti-ferrara/scripts/sync_cassonetti.py
+      - name: Aggiorna il dataset statico
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add cassonetti-ferrara/data/cassonetti-ferrara.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Update Ferrara waste container coordinates from OSM'
+            git push origin HEAD:master
+          fi
