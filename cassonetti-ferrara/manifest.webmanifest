@@ -1,0 +1,20 @@
+{
+  "id": "./",
+  "name": "Cassonetti FE — Mappa provincia di Ferrara",
+  "short_name": "Cassonetti FE",
+  "description": "Trova e contrassegna i cassonetti nella provincia di Ferrara",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1627",
+  "theme_color": "#0b1627",
+  "lang": "it",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
