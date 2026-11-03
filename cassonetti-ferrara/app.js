@@ -103,7 +103,7 @@
     const errors = [];
     for (const endpoint of OVERPASS) {
       const controller = new AbortController();
-      const stop = setTimeout(() => controller.abort(), 28000);
+      const stop = setTimeout(() => controller.abort(), 20000);
       try {
         const response = await fetch(endpoint + "?data=" + encodeURIComponent(query), {signal:controller.signal, headers:{"Accept":"application/json"}});
         if (!response.ok) throw Error("HTTP " + response.status);
@@ -116,54 +116,86 @@
     }
     throw Error(errors.join("; "));
   }
+  async function loadStaticDataset() {
+    // Dataset statico generato dal nostro workflow: niente CORS / timeout Overpass sul telefono.
+    const response = await fetch("./data/cassonetti-ferrara.json", {cache:"no-store"});
+    if (!response.ok) throw Error("Archivio OSM statico non disponibile (" + response.status + ")");
+    const data = await response.json();
+    if (!data || !Array.isArray(data.points) || !data.points.length) throw Error("Archivio OSM statico vuoto");
+    const valid = data.points.filter(p =>
+      p && typeof p.id === "string" && p.id.startsWith("osm:") &&
+      Number.isFinite(p.lat) && Number.isFinite(p.lon) &&
+      (p.kind === "waste" || p.kind === "recycling") &&
+      typeof p.name === "string"
+    );
+    if (!valid.length) throw Error("Nessuna coordinata valida nell'archivio statico");
+    state.osm = valid;
+    state.dataOrigin = "OpenStreetMap · archivio";
+    state.hasNetworkData = true;
+    saveJSON(STORE.cache,{time:Date.now(),origin:state.dataOrigin,points:valid});
+    combinePoints();
+    const date = data.updatedAt ? new Date(data.updatedAt).toLocaleDateString("it-IT",{day:"2-digit",month:"short",year:"numeric"}) : "recente";
+    $("data-status").textContent = "OpenStreetMap · dati del " + date;
+    return valid.length;
+  }
   async function refreshData(force) {
     if (state.fetching) return;
-    const cached = readJSON(STORE.cache, null);
-    if (!force && cached && Array.isArray(cached.points)) {
-      const time = Number(cached.time || 0);
-      if (Date.now() - time < STORAGE_DAYS*24*60*60*1000) {
-        state.osm = cached.points;
-        state.dataOrigin = cached.origin || "OSM";
-        state.hasNetworkData = true;
-        combinePoints();
-        const label = new Date(time).toLocaleDateString("it-IT", {day:"2-digit",month:"short",year:"numeric"});
-        $("data-status").textContent = "OpenStreetMap · cache del " + label;
-        if (Date.now() - time < MAX_AGE) return;
-      }
-    }
     state.fetching = true;
     $("refresh-data").disabled = true;
-    $("map-counter").textContent = "Carico i punti OpenStreetMap…";
-    try {
-      let data = await requestOverpass(buildQuery(true));
-      let points = normalize(data);
-      let origin = "OSM · provincia";
-      if (!points.length) {
-        data = await requestOverpass(buildQuery(false));
-        points = normalize(data);
-        origin = "OSM · area indicativa";
-        showNotice("Confini provinciali non disponibili: i dati possono includere zone limitrofe.");
-      }
-      if (!points.length) throw Error("Nessun cassonetto censito nella risposta.");
-      state.osm = points;
-      state.dataOrigin = origin;
+    const cached = readJSON(STORE.cache, null);
+    let hasValidCache = false;
+    if (cached && Array.isArray(cached.points) && cached.points.length && Date.now() - Number(cached.time || 0) < STORAGE_DAYS*24*60*60*1000) {
+      state.osm = cached.points;
+      state.dataOrigin = cached.origin || "OpenStreetMap";
       state.hasNetworkData = true;
+      combinePoints();
+      hasValidCache = true;
+      $("data-status").textContent = state.dataOrigin + " · salvati nel browser";
+    } else {
+      $("map-counter").textContent = "Carico cassonetti reali…";
+    }
+    try {
+      if (!force) {
+        // L'archivio Github viene aggiornato in autonomia, e rende immediato l'avvio.
+        const count = await loadStaticDataset();
+        if (!hasValidCache) toast(count.toLocaleString("it-IT") + " cassonetti caricati");
+        return;
+      }
+      // Il refresh manuale prova prima la fonte live, senza cancellare il dataset salvato.
+      const live=await requestOverpass(buildQuery(true));
+      let points=normalize(live), origin="OSM · provincia";
+      if (!points.length) {
+        const fallback=await requestOverpass(buildQuery(false));
+        points=normalize(fallback);origin="OSM · area indicativa";
+      }
+      if (!points.length) throw Error("Nessun punto censito nella risposta");
+      state.osm=points;state.dataOrigin=origin;state.hasNetworkData=true;
       saveJSON(STORE.cache,{time:Date.now(),origin,points});
       combinePoints();
-      $("data-status").textContent = origin + " · aggiornati oggi";
-      toast(points.length.toLocaleString("it-IT") + " punti OpenStreetMap caricati");
-    } catch (error) {
+      $("data-status").textContent=origin+" · aggiornati adesso";
+      toast(points.length.toLocaleString("it-IT")+" cassonetti aggiornati");
+    } catch(error) {
+      console.warn("Impossibile aggiornare Overpass / archivio:",error);
       if (!state.hasNetworkData) {
-        $("map-counter").textContent = "Dati online non disponibili";
-        showNotice("Impossibile caricare OpenStreetMap. Riprova con ↻; puoi comunque aggiungere punti manualmente.");
-        combinePoints();
-      } else {
-        toast("Aggiornamento non riuscito: uso i dati già salvati");
+        try {
+          const live = await requestOverpass(buildQuery(true));
+          const points=normalize(live);
+          if (!points.length) throw Error("Risposta priva di cassonetti");
+          state.osm=points;state.dataOrigin="OSM · aggiornamento live";state.hasNetworkData=true;
+          saveJSON(STORE.cache,{time:Date.now(),origin:state.dataOrigin,points});
+          combinePoints();
+          toast(points.length.toLocaleString("it-IT")+" cassonetti caricati");
+        } catch(failure) {
+          showNotice("Dati OSM temporaneamente non disponibili. Premi ↻ per riprovare oppure aggiungi un punto col +.");
+          console.warn("Servizi dati non disponibili:", failure);
+          combinePoints();
+        }
+      } else if(force) {
+        toast("Aggiornamento online non riuscito: punti esistenti conservati");
       }
-      console.warn("Overpass non raggiungibile:", error);
     } finally {
-      state.fetching = false;
-      $("refresh-data").disabled = false;
+      state.fetching=false;
+      $("refresh-data").disabled=false;
       refreshStats();
     }
   }
