@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1627">
+  <meta name="description" content="Mappa dei cassonetti e dei punti di raccolta nella provincia di Ferrara. Trova, naviga e contrassegna con una X i punti visitati.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Cassonetti FE">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+  <link rel="stylesheet" href="./style.css?v=4">
+  <title>Cassonetti FE · Mappa</title>
+</head>
+<body>
+<svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.7"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 1v4m0 14v4M1 12h4m14 0h4"/></symbol>
+  <symbol id="i-navigation" viewBox="0 0 24 24"><path d="m3 11 18-8-8 18-2.7-7.3L3 11Z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M5 5 19 19M19 5 5 19"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14-5L4 8m0-5v5h5M4 13a8 8 0 0 0 14 5l2-2m0 5v-5h-5"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 9 5-9 5-9-5 9-5Zm-9 10 9 5 9-5M3 17l9 5 9-5"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 16v4h16v-4"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 17v4h16v-4"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v7m4-7v7"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v.5"/></symbol>
+</svg>
+<header class="topbar">
+  <div class="brand"><span class="brand-icon"><svg><use href="#i-pin"/></svg></span>
+    <div><strong>Cassonetti <span>FE</span></strong><small>Provincia di Ferrara</small></div>
+  </div>
+  <div class="header-actions">
+    <button id="mark-mode" class="top-button mark-mode" type="button" title="Attiva la modalità X"><svg><use href="#i-x"/></svg><span>Modalità X</span></button>
+    <button id="menu-button" class="top-button icon-only" type="button" aria-label="Opzioni"><svg><use href="#i-menu"/></svg></button>
+  </div>
+</header>
+<main class="layout">
+  <aside class="sidebar" id="sidebar">
+    <section class="sidebar-top">
+      <div class="eyebrow">ESPLORA IL TERRITORIO <span class="live-dot"></span></div>
+      <h1>Ogni cassonetto.<br><em>Una sola mappa.</em></h1>
+      <p>Trova un punto, raggiungilo e segnalo con una X.</p>
+      <div class="stat-cards">
+        <div class="stat"><span>In mappa</span><strong id="total-count">—</strong></div>
+        <div class="stat accent"><span>Con la X</span><strong id="marked-count">0</strong></div>
+        <div class="stat"><span>Da visitare</span><strong id="remaining-count">—</strong></div>
+      </div>
+      <label class="searchbox" for="search-input"><svg><use href="#i-search"/></svg><input id="search-input" type="search" placeholder="Cerca zona o punto..." autocomplete="off"><kbd id="clear-search" hidden>×</kbd></label>
+      <div class="chip-row" role="group" aria-label="Filtra i punti">
+        <button class="chip selected" data-filter="all" type="button">Tutti</button>
+        <button class="chip" data-filter="waste" type="button">Indifferenziata</button>
+        <button class="chip" data-filter="recycling" type="button">Differenziata</button>
+        <button class="chip" data-filter="marked" type="button"><span class="chip-x">×</span> Con X</button>
+        <button class="chip" data-filter="unmarked" type="button">Senza X</button>
+        <button class="chip" data-filter="custom" type="button">Aggiunti da me</button>
+      </div>
+      <div class="list-heading"><strong id="list-heading">Punti vicini</strong><button id="sort-button" type="button">Distanza ↕</button></div>
+    </section>
+    <div class="places-list" id="places-list" aria-live="polite"><div class="list-placeholder">Caricamento dei punti…</div></div>
+    <div class="side-footer"><span id="data-status">Fonte OpenStreetMap · dati non ufficiali</span><button id="refresh-data" type="button" title="Aggiorna i dati"><svg><use href="#i-refresh"/></svg></button></div>
+  </aside>
+  <section class="map-area" aria-label="Mappa cassonetti">
+    <div id="map" role="application" aria-label="Mappa interattiva dei cassonetti"></div>
+    <div class="map-notice" id="map-notice" hidden></div>
+    <div class="map-counter" id="map-counter">Caricamento mappa…</div>
+    <div class="map-tools">
+      <button id="locate-button" class="round-button" type="button" title="La mia posizione" aria-label="La mia posizione"><svg><use href="#i-target"/></svg></button>
+      <button id="add-button" class="round-button add-round" type="button" title="Aggiungi cassonetto" aria-label="Aggiungi cassonetto"><svg><use href="#i-plus"/></svg></button>
+    </div>
+    <button class="mobile-list-toggle" id="mobile-list-toggle" type="button"><svg><use href="#i-layers"/></svg><span>Elenco e filtri</span><b id="mobile-count">—</b></button>
+    <section class="detail-sheet" id="detail-sheet" hidden aria-live="polite">
+      <button class="detail-close" id="detail-close" type="button" aria-label="Chiudi">×</button>
+      <div class="detail-kicker" id="detail-kicker">PUNTO DI RACCOLTA</div>
+      <h2 id="detail-title">Cassonetto</h2>
+      <p id="detail-subtitle"></p>
+      <p class="detail-distance" id="detail-distance"></p>
+      <div class="detail-actions">
+        <button class="primary-action" id="detail-mark" type="button"><svg><use href="#i-x"/></svg><span>Segna con X</span></button>
+        <button class="secondary-action" id="detail-nav" type="button"><svg><use href="#i-navigation"/></svg> Naviga</button>
+      </div>
+      <button class="delete-custom" id="detail-remove" type="button" hidden>Elimina punto aggiunto</button>
+    </section>
+  </section>
+</main>
+<div class="mobile-panel-cover" id="mobile-panel-cover" hidden></div>
+<div class="options-cover" id="options-cover" hidden></div>
+<section class="options-menu" id="options-menu" hidden>
+  <h2>Opzioni</h2>
+  <p>Le X e i punti personali restano memorizzati su questo browser.</p>
+  <button id="export-button" type="button"><svg><use href="#i-download"/></svg> Esporta salvataggio (.json)</button>
+  <button id="import-button" type="button"><svg><use href="#i-upload"/></svg> Importa salvataggio</button>
+  <input type="file" id="import-file" accept="application/json,.json" hidden>
+  <button id="clear-marks" type="button" class="danger-link"><svg><use href="#i-trash"/></svg> Rimuovi tutte le X</button>
+  <div class="options-attribution">Mappe © OpenStreetMap contributors · punti censiti dagli utenti OSM, non certificati dai gestori dei rifiuti. Alcuni cassonetti potrebbero mancare o essere spostati.</div>
+</section>
+<dialog id="add-dialog">
+  <form id="add-form" method="dialog">
+    <div class="dialog-head"><div><span class="eyebrow">AGGIUNGI UN PUNTO</span><h2>Nuovo cassonetto</h2></div><button id="cancel-add" type="button" class="dialog-x">×</button></div>
+    <p class="dialog-intro">Spostati sulla mappa e usa il centro, oppure sfrutta la posizione GPS. Il punto rimarrà solo nel tuo browser.</p>
+    <div class="dialog-coordinates"><span>COORDINATE</span><strong id="add-coords">—</strong></div>
+    <label class="form-label" for="add-name">Nome / riferimento</label>
+    <input id="add-name" name="name" maxlength="100" placeholder="Es. Cassonetti via Bologna" required>
+    <label class="form-label" for="add-type">Tipologia</label>
+    <select id="add-type"><option value="waste">Indifferenziata</option><option value="recycling">Differenziata</option></select>
+    <div class="dialog-actions"><button id="add-gps" class="secondary-action" type="button"><svg><use href="#i-target"/></svg> Usa GPS</button><button type="submit" class="primary-action">Salva punto</button></div>
+  </form>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" defer></script>
+<script src="./app.js?v=4" defer></script>
+</body>
+</html>
