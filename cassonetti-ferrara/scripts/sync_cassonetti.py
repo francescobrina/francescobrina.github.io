@@ -6,8 +6,8 @@ ROOT=pathlib.Path(__file__).resolve().parent.parent
 OUT=ROOT/"data"/"cassonetti-ferrara.json"
 SERVERS=["https://overpass-api.de/api/interpreter","https://overpass.private.coffee/api/interpreter","https://overpass.kumi.systems/api/interpreter"]
 QUERIES=[
- '[out:json][timeout:75];area["boundary"="administrative"]["admin_level"="6"]["name"~"Ferrara",i]->.fe;(nwr["amenity"="waste_disposal"](area.fe);nwr["amenity"="recycling"](area.fe););out center;',
- '[out:json][timeout:75];(nwr["amenity"="waste_disposal"](44.48,11.12,45.20,12.47);nwr["amenity"="recycling"](44.48,11.12,45.20,12.47););out center;'
+ '[out:json][timeout:40];(nwr["amenity"="waste_disposal"](44.48,11.12,45.20,12.47);nwr["amenity"="recycling"](44.48,11.12,45.20,12.47););out center;',
+ '[out:json][timeout:40];area["boundary"="administrative"]["admin_level"="6"]["name"~"Ferrara",i]->.fe;(nwr["amenity"="waste_disposal"](area.fe);nwr["amenity"="recycling"](area.fe););out center;'
 ]
 def get(query):
     for server in SERVERS:
@@ -69,7 +69,7 @@ def main():
         try:
             points=normalize(get(query))
             if not points:raise ValueError("Zero punti validi")
-            payload={"source":"OpenStreetMap Overpass API","license":"ODbL 1.0","coverage":"Provincia di Ferrara" if i==0 else "Area geografica estesa, perimetro approssimato","updatedAt":datetime.datetime.now(datetime.timezone.utc).isoformat(),"count":len(points),"points":points}
+            payload={"source":"OpenStreetMap Overpass API","license":"ODbL 1.0","coverage":"Area geografica estesa, perimetro approssimato" if i==0 else "Provincia di Ferrara","updatedAt":datetime.datetime.now(datetime.timezone.utc).isoformat(),"count":len(points),"points":points}
             OUT.parent.mkdir(parents=True,exist_ok=True)
             OUT.write_text(json.dumps(payload,separators=(",",":"),ensure_ascii=False)+"\n",encoding="utf8")
             print("Punti reali salvati:",len(points),flush=True)
