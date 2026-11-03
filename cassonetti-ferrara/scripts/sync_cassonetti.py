@@ -4,7 +4,7 @@ import datetime, json, pathlib, sys, time, xml.etree.ElementTree as ET
 from urllib import parse, request
 ROOT=pathlib.Path(__file__).resolve().parent.parent
 OUT=ROOT/"data"/"cassonetti-ferrara.json"
-SERVERS=["https://overpass-api.de/api/interpreter","https://overpass.private.coffee/api/interpreter","https://overpass.kumi.systems/api/interpreter"]
+SERVERS=["https://maps.mail.ru/osm/tools/overpass/api/interpreter","https://overpass-api.de/api/interpreter","https://overpass.private.coffee/api/interpreter","https://overpass.kumi.systems/api/interpreter"]
 QUERIES=[
  '[out:json][timeout:40];(nwr["amenity"="waste_disposal"](44.48,11.12,45.20,12.47);nwr["amenity"="recycling"](44.48,11.12,45.20,12.47););out center;',
  '[out:json][timeout:40];area["boundary"="administrative"]["admin_level"="6"]["name"~"Ferrara",i]->.fe;(nwr["amenity"="waste_disposal"](area.fe);nwr["amenity"="recycling"](area.fe););out center;'
@@ -15,7 +15,7 @@ def get(query):
             print("Richiesta:",server,flush=True)
             payload=parse.urlencode({"data":query}).encode()
             req=request.Request(server,data=payload,headers={"User-Agent":"Cassonetti-FE-OpenStreetMap-Importer/1.1","Accept":"application/json","Content-Type":"application/x-www-form-urlencoded"})
-            with request.urlopen(req,timeout=(80 if "overpass-api.de" in server else 18)) as response: data=json.load(response)
+            with request.urlopen(req,timeout=(80 if ("overpass-api.de" in server or "maps.mail.ru" in server) else 18)) as response: data=json.load(response)
             if not data.get("elements"): raise ValueError("Nessun elemento")
             return data["elements"]
         except Exception as exc:
