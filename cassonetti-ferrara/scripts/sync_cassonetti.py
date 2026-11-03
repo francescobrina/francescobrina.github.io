@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Download only real OpenStreetMap coordinates; never invent bins."""
-import datetime, json, pathlib, sys, time
+import datetime, json, pathlib, sys, time, xml.etree.ElementTree as ET
 from urllib import parse, request
 ROOT=pathlib.Path(__file__).resolve().parent.parent
 OUT=ROOT/"data"/"cassonetti-ferrara.json"
@@ -15,12 +15,12 @@ def get(query):
             print("Richiesta:",server,flush=True)
             payload=parse.urlencode({"data":query}).encode()
             req=request.Request(server,data=payload,headers={"User-Agent":"Cassonetti-FE-OpenStreetMap-Importer/1.1","Accept":"application/json","Content-Type":"application/x-www-form-urlencoded"})
-            with request.urlopen(req,timeout=105) as response: data=json.load(response)
+            with request.urlopen(req,timeout=25) as response: data=json.load(response)
             if not data.get("elements"): raise ValueError("Nessun elemento")
             return data["elements"]
         except Exception as exc:
             print(str(exc),file=sys.stderr,flush=True)
-            time.sleep(2)
+            time.sleep(1)
     raise RuntimeError("Tutti gli endpoint Overpass non disponibili")
 def normalize(elements):
     out={}
@@ -41,6 +41,29 @@ def normalize(elements):
             if types:notes.append(", ".join(types))
         out[key]={"id":key,"lat":float(lat),"lon":float(lon),"name":name,"kind":kind,"description":" · ".join(notes) or "Posizione censita OpenStreetMap","custom":False}
     return sorted(out.values(),key=lambda p:p["id"])
+def fallback_osm_main_api():
+    """Ripiego sui punti REALI presenti nell'API OpenStreetMap (alcune zone)."""
+    bboxes=[
+      '11.585,44.807,11.665,44.870',
+      '11.273,44.706,11.326,44.752',
+      '12.157,44.677,12.223,44.713',
+      '11.810,44.594,11.875,44.640',
+      '11.790,44.867,11.855,44.914'
+    ]
+    results=[]
+    for bbox in bboxes:
+        try:
+            url='https://api.openstreetmap.org/api/0.6/map?bbox='+bbox
+            req=request.Request(url,headers={'User-Agent':'Cassonetti-FE-OpenStreetMap-Importer/1.1'})
+            with request.urlopen(req,timeout=30) as resp: doc=ET.parse(resp).getroot()
+            for node in doc.iter('node'):
+                tags={tag.attrib['k']:tag.attrib['v'] for tag in node.findall('tag')}
+                if tags.get('amenity') in ('recycling','waste_disposal'):
+                    results.append({'type':'node','id':node.attrib['id'],'lat':float(node.attrib['lat']),'lon':float(node.attrib['lon']),'tags':tags})
+            print('OSM API punti rilevati:',len(results),flush=True)
+        except Exception as exc: print('OSM API errore:',str(exc),file=sys.stderr,flush=True)
+    return results
+
 def main():
     for i,query in enumerate(QUERIES):
         try:
@@ -52,5 +75,12 @@ def main():
             print("Punti reali salvati:",len(points),flush=True)
             return
         except Exception as exc: print("Copertura non riuscita:",exc,file=sys.stderr,flush=True)
+    partial=normalize(fallback_osm_main_api())
+    if partial:
+        payload={"source":"OpenStreetMap API","license":"ODbL 1.0","coverage":"Alcuni centri abitati (copertura parziale)","updatedAt":datetime.datetime.now(datetime.timezone.utc).isoformat(),"count":len(partial),"points":partial}
+        OUT.parent.mkdir(parents=True,exist_ok=True)
+        OUT.write_text(json.dumps(payload,separators=(",",":"),ensure_ascii=False)+"\n",encoding="utf8")
+        print("Punti reali parziali salvati:",len(partial),flush=True)
+        return
     raise RuntimeError("Nessun dato scaricato: non sovrascrivo l'eventuale archivio")
 if __name__=="__main__":main()
