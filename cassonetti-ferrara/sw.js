@@ -1,6 +1,6 @@
 /* Cache dell'app, non dei tasselli OpenStreetMap (rispetta policy tiles). */
-const CACHE = "cassonetti-fe-shell-v4";
-const SHELL = ["./","./index.html","./style.css?v=4","./app.js?v=4","./manifest.webmanifest","./icon.svg"];
+const CACHE = "cassonetti-fe-shell-v5";
+const SHELL = ["./","./index.html","./style.css?v=5","./app.js?v=5","./manifest.webmanifest","./icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(()=>self.skipWaiting()).catch(()=>self.skipWaiting()));
 });
