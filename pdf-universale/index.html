@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PDF Universale Web — Unisci PDF e immagini</title>
+<meta name="theme-color" content="#101d2c">
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#e7eef8;background:#101722}
+*{box-sizing:border-box}
+body{margin:0}main{max-width:950px;margin:auto;padding:26px 16px 65px}
+h1{font-size:clamp(1.65rem,5vw,2.3rem);margin:12px 0 8px}h2{font-size:1.15rem}
+p{color:#c2cee0;line-height:1.6}.muted{font-size:.89rem;color:#9baec7}
+.panel{background:#192537;border:1px solid #34445c;border-radius:16px;padding:19px;margin-top:16px}
+.drop{border:2px dashed #607ca4;text-align:center;padding:30px 10px;cursor:pointer}
+.drop.over{background:#263955;border-color:#a9d0ff}
+button{background:#8fbeff;color:#101d2c;border:0;padding:11px 15px;border-radius:9px;cursor:pointer;font-weight:700}
+button:hover{filter:brightness(1.09)}button:disabled{opacity:.42;cursor:not-allowed}
+button.alt{background:#2b3c54;color:#e3ecfa}
+button.small{padding:5px 9px;font-size:.81rem}
+.actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+#files{display:grid;gap:8px;list-style:none;padding:0}
+.file{background:#223149;border-radius:10px;padding:12px;display:flex;align-items:center;gap:9px}
+.file .name{flex:1;min-width:0;overflow-wrap:anywhere}
+.file .size{font-size:.82rem;color:#aebfd6}
+#log{white-space:pre-wrap;overflow:auto;max-height:270px;min-height:94px;background:#0c1420;border-radius:8px;padding:14px;font:12px/1.5 ui-monospace,monospace;color:#cae3ef}
+.notice{color:#e9c785}
+progress{width:100%;height:13px}
+a{color:#a8cfff}header a{font-size:.9rem}
+</style>
+</head>
+<body><main>
+<header><a href="/">← Torna al sito</a><h1>PDF Universale <span style="color:#8fbeff">Web</span></h1>
+<p>Unisci PDF e immagini in un PDF unico. I file restano sul tuo dispositivo: nessun caricamento sul server.</p></header>
+<section class="panel drop" id="drop" role="button" tabindex="0" aria-label="Seleziona file PDF e immagini">
+<h2>Trascina i file qui</h2><p>Oppure tocca per selezionare PDF, JPG, PNG, WebP, BMP e GIF.</p>
+<input type="file" id="picker" multiple accept=".pdf,.jpg,.jpeg,.jfif,.png,.webp,.bmp,.gif,.tiff,.tif,image/*" hidden>
+<button type="button" id="pick" class="alt">Scegli file</button></section>
+<section class="panel"><div class="actions"><h2 style="flex:1">Ordine dei file <span id="count">(0)</span></h2>
+<button type="button" id="clear" class="alt">Svuota</button></div>
+<ol id="files"><li class="muted">Nessun file selezionato.</li></ol>
+<p class="muted">Usa le frecce per modificare l'ordine. Se un file è corrotto o non compatibile, il programma prova a saltarlo e continua.</p></section>
+<section class="panel">
+<div class="actions"><button id="run" disabled>Converti e unisci</button><button id="cancel" class="alt" disabled>Annulla</button><button id="report" class="alt" disabled>Scarica rapporto CSV</button></div>
+<p id="status" aria-live="polite">Pronto.</p><progress id="progress" max="100" value="0"></progress>
+<h2>Registro elaborazione</h2><div id="log" role="log" aria-live="polite">In attesa.</div></section>
+<section class="panel"><h2>Per i file molto grandi</h2>
+<p class="notice">Per 1 GB di documenti, per Word, Excel, PowerPoint o file particolarmente problematici, usa la versione desktop: il browser può esaurire la memoria. Non esiste una soglia garantita sul web.</p>
+<p class="muted">Questa versione web usa la libreria pdf-lib, caricata da un CDN. Non invia i documenti al CDN; soltanto il codice della libreria viene scaricato. Le immagini animate vengono trattate come singola immagine.</p>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script>
+(function(){
+'use strict';
+var selected=[], reports=[], aborted=false, running=false, blobURL=null;
+var el=function(id){return document.getElementById(id)};
+function bytes(n){if(n<1024)return n+' B';return (n/Math.pow(1024,Math.floor(Math.log(n)/Math.log(1024)))).toFixed(1)+' '+['B','KB','MB','GB','TB'][Math.floor(Math.log(n)/Math.log(1024))]}
+function log(s){var a=el('log');if(a.textContent==='In attesa.')a.textContent='';a.textContent+=s+'\n';a.scrollTop=a.scrollHeight}
+function status(s){el('status').textContent=s}
+function add(files){if(running)return;Array.from(files).forEach(function(file){if(!selected.some(function(x){return x.file===file}))selected.push({id:Math.random().toString(36).slice(2),file:file})});draw()}
+function draw(){
+ el('files').innerHTML='';
+ el('count').textContent='('+selected.length+')';
+ selected.forEach(function(x,i){
+ var li=document.createElement('li');li.className='file';
+ var main=document.createElement('div');main.className='name';main.textContent=(i+1)+'. '+x.file.name;
+ var size=document.createElement('span');size.className='size';size.textContent=bytes(x.file.size);
+ li.append(main,size);
+ function mk(t,fn,disabled){var b=document.createElement('button');b.type='button';b.className='small alt';b.textContent=t;b.disabled=disabled||running;b.addEventListener('click',fn);li.appendChild(b)}
+ mk('↑',function(){if(i){var a=selected.splice(i,1)[0];selected.splice(i-1,0,a);draw()}},i===0);
+ mk('↓',function(){if(i<selected.length-1){var a=selected.splice(i,1)[0];selected.splice(i+1,0,a);draw()}},i===selected.length-1);
+ mk('×',function(){selected.splice(i,1);draw()},false);
+ el('files').appendChild(li);
+ });
+ if(!selected.length){var item=document.createElement('li');item.className='muted';item.textContent='Nessun file selezionato.';el('files').appendChild(item)}
+ el('run').disabled=running||!selected.length;el('clear').disabled=running;
+}
+el('pick').onclick=function(e){e.stopPropagation();el('picker').click()};
+el('picker').onchange=function(){add(this.files);this.value=''};
+el('drop').onclick=function(e){if(e.target.id!=='pick')el('picker').click()};
+el('drop').onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();el('picker').click()}};
+['dragenter','dragover'].forEach(function(ev){el('drop').addEventListener(ev,function(e){e.preventDefault();el('drop').classList.add('over')})});
+['dragleave','drop'].forEach(function(ev){el('drop').addEventListener(ev,function(e){e.preventDefault();el('drop').classList.remove('over')})});
+el('drop').addEventListener('drop',function(e){add(e.dataTransfer.files)});
+el('clear').onclick=function(){selected=[];draw()};
+el('cancel').onclick=function(){aborted=true;status('Annullamento richiesto: terminerà dopo l’operazione corrente.')};
+function download(blob, name){if(blobURL)URL.revokeObjectURL(blobURL);blobURL=URL.createObjectURL(blob);var a=document.createElement('a');a.href=blobURL;a.download=name;a.click();setTimeout(function(){if(blobURL){URL.revokeObjectURL(blobURL);blobURL=null}},60000)}
+function asCSV(){
+ var rows=[['file','esito','pagine','dettaglio']].concat(reports.map(function(x){return [x.file,x.status,x.pages,x.note]}));
+ return '\ufeff'+rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"'}).join(';')}).join('\r\n');
+}
+el('report').onclick=function(){download(new Blob([asCSV()],{type:'text/csv;charset=utf-8'}),'pdf_universale_report.csv')};
+async function imageToPng(file){
+ var bitmap=await createImageBitmap(file),canvas=document.createElement('canvas');
+ var max=6000, ratio=Math.min(1,max/Math.max(bitmap.width,bitmap.height));
+ canvas.width=Math.max(1,Math.round(bitmap.width*ratio));canvas.height=Math.max(1,Math.round(bitmap.height*ratio));
+ var c=canvas.getContext('2d');c.fillStyle='#ffffff';c.fillRect(0,0,canvas.width,canvas.height);c.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
+ return new Uint8Array(await new Promise(function(resolve,reject){canvas.toBlob(async function(b){if(b)resolve(await b.arrayBuffer());else reject(new Error('Immagine non decodificabile'))},'image/png')}));
+}
+async function doPDF(result,file){
+ var src=await PDFLib.PDFDocument.load(await file.arrayBuffer(),{ignoreEncryption:false});
+ var ok=0,failed=0;
+ for(var i=0;i<src.getPageCount();i++){
+   try{var pages=await result.copyPages(src,[i]);result.addPage(pages[0]);ok++}catch(e){failed++;log('  Pagina '+(i+1)+' saltata: '+String(e.message||e).slice(0,120))}
+ }
+ if(!ok)throw new Error('Nessuna pagina leggibile');
+ return {pages:ok,failed:failed};
+}
+async function doImage(result,file){
+ var ext=file.name.toLowerCase().split('.').pop(),buf,embedded;
+ if(ext==='jpg'||ext==='jpeg'||ext==='jfif') {
+   buf=await file.arrayBuffer();
+   try{embedded=await result.embedJpg(buf)}catch(e){embedded=await result.embedPng(await imageToPng(file))}
+ } else if(ext==='png'){
+   buf=await file.arrayBuffer();
+   try{embedded=await result.embedPng(buf)}catch(e){embedded=await result.embedPng(await imageToPng(file))}
+ } else {
+   embedded=await result.embedPng(await imageToPng(file));
+ }
+ var w=embedded.width,h=embedded.height,land=w>h,pw=land?842:595,ph=land?595:842;
+ var scale=Math.min((pw-36)/w,(ph-36)/h);
+ var page=result.addPage([pw,ph]);
+ page.drawImage(embedded,{x:(pw-w*scale)/2,y:(ph-h*scale)/2,width:w*scale,height:h*scale});
+ return {pages:1,failed:0};
+}
+el('run').onclick=async function(){
+ if(running||!selected.length)return;
+ if(!window.PDFLib){status('Impossibile caricare la libreria PDF. Verifica la connessione.');return}
+ running=true;aborted=false;reports=[];el('report').disabled=true;el('cancel').disabled=false;
+ draw();el('log').textContent='';el('progress').value=0;
+ var total=selected.reduce(function(a,x){return a+x.file.size},0);
+ if(total>200*1024*1024){log('ATTENZIONE: '+bytes(total)+' selezionati. Il browser potrebbe terminare per memoria insufficiente. Per lotti grandi è preferibile il desktop.')}
+ var out=await PDFLib.PDFDocument.create();
+ var succeeded=0,skipped=0;
+ for(var i=0;i<selected.length;i++){
+  if(aborted){log('Elaborazione annullata.');break}
+  var f=selected[i].file;status('Elaborazione '+(i+1)+'/'+selected.length+': '+f.name);
+  log('['+(i+1)+'/'+selected.length+'] '+f.name);
+  var rec={file:f.name,status:'saltato',pages:0,note:''};
+  try{
+   var result;
+   if(/\.pdf$/i.test(f.name))result=await doPDF(out,f);
+   else if(/\.(jpg|jpeg|jfif|png|webp|bmp|gif|tif|tiff)$/i.test(f.name)||f.type.startsWith('image/'))result=await doImage(out,f);
+   else throw new Error('Formato non supportato da questa versione web');
+   rec.status='ok';rec.pages=result.pages;rec.note=result.failed?'Pagine saltate: '+result.failed:'';
+   succeeded++;log('  OK: '+rec.pages+' pagine'+(rec.note?' ('+rec.note+')':''));
+  }catch(e){skipped++;rec.note=String(e&&e.message||e).slice(0,250);log('  SALTATO: '+rec.note)}
+  reports.push(rec);
+  el('progress').value=Math.round((i+1)/selected.length*100);
+  await new Promise(function(r){setTimeout(r,0)});
+ }
+ try{
+  if(out.getPageCount()&&(!aborted||confirm('Operazione annullata. Vuoi scaricare le pagine già completate?'))){
+   status('Creazione del PDF finale in corso…');
+   var b=await out.save({useObjectStreams:true});
+   download(new Blob([b],{type:'application/pdf'}),'merged_universale.pdf');
+   log('PDF creato: '+out.getPageCount()+' pagine. '+succeeded+' file riusciti, '+skipped+' saltati.');
+   status('Completato. File riusciti: '+succeeded+' · saltati: '+skipped);
+  } else {status('Nessun PDF prodotto.');log('Nessuna pagina recuperabile.')}
+ }catch(e){status('Errore salvataggio: '+String(e.message||e));log('PDF finale non salvato. Per file grandi usa il programma desktop.')}
+ running=false;el('cancel').disabled=true;el('report').disabled=false;draw();
+};
+draw();
+})();
+</script>
+</body></html>
