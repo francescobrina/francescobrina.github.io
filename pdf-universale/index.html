@@ -17,6 +17,9 @@ button{background:#8fbeff;color:#101d2c;border:0;padding:11px 15px;border-radius
 button:hover{filter:brightness(1.09)}button:disabled{opacity:.42;cursor:not-allowed}
 button.alt{background:#2b3c54;color:#e3ecfa}
 button.small{padding:5px 9px;font-size:.81rem}
+select{max-width:100%;padding:11px;background:#101c2b;color:#f1f5fc;border:1px solid #6c83a6;border-radius:9px;font:inherit}
+select:disabled{opacity:.5}
+label{font-weight:650;display:block;margin-bottom:9px}
 .actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
 #files{display:grid;gap:8px;list-style:none;padding:0}
 .file{background:#223149;border-radius:10px;padding:12px;display:flex;align-items:center;gap:9px}
@@ -40,8 +43,18 @@ a{color:#a8cfff}header a{font-size:.9rem}
 <ol id="files"><li class="muted">Nessun file selezionato.</li></ol>
 <p class="muted">Usa le frecce per modificare l'ordine. Se un file è corrotto o non compatibile, il programma prova a saltarlo e continua.</p></section>
 <section class="panel">
+<h2>Compressione e leggibilità</h2>
+<label for="profile">Profilo per immagini e scansioni importate</label>
+<select id="profile">
+<option value="readable" selected>Alta leggibilità (consigliato per ChatGPT) — JPEG 90%, fino a 3508 px</option>
+<option value="compact">Più compatto — JPEG 82%, fino a 2600 px</option>
+<option value="original">Senza ricompressione — massima fedeltà</option>
+</select>
+<p class="muted">I PDF già esistenti mantengono testi selezionabili, impaginazione e immagini originali. Questa modalità non ricomprime le immagini all'interno dei PDF né esegue OCR: ottimizza solo le immagini aggiunte separatamente.</p>
+</section>
+<section class="panel">
 <div class="actions"><button id="run" disabled>Converti e unisci</button><button id="cancel" class="alt" disabled>Annulla</button><button id="report" class="alt" disabled>Scarica rapporto CSV</button></div>
-<p id="status" aria-live="polite">Pronto.</p><progress id="progress" max="100" value="0"></progress>
+<p id="status" aria-live="polite">Pronto.</p><p id="savings" class="muted" aria-live="polite"></p><progress id="progress" max="100" value="0"></progress>
 <h2>Registro elaborazione</h2><div id="log" role="log" aria-live="polite">In attesa.</div></section>
 <section class="panel"><h2>Per i file molto grandi</h2>
 <p class="notice">Per 1 GB di documenti, per Word, Excel, PowerPoint o file particolarmente problematici, usa la versione desktop: il browser può esaurire la memoria. Non esiste una soglia garantita sul web.</p>
@@ -73,7 +86,7 @@ function draw(){
  el('files').appendChild(li);
  });
  if(!selected.length){var item=document.createElement('li');item.className='muted';item.textContent='Nessun file selezionato.';el('files').appendChild(item)}
- el('run').disabled=running||!selected.length;el('clear').disabled=running;
+ el('run').disabled=running||!selected.length;el('clear').disabled=running;el('profile').disabled=running;
 }
 el('pick').onclick=function(e){e.stopPropagation();el('picker').click()};
 el('picker').onchange=function(){add(this.files);this.value=''};
@@ -97,6 +110,30 @@ async function imageToPng(file){
  var c=canvas.getContext('2d');c.fillStyle='#ffffff';c.fillRect(0,0,canvas.width,canvas.height);c.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
  return new Uint8Array(await new Promise(function(resolve,reject){canvas.toBlob(async function(b){if(b)resolve(await b.arrayBuffer());else reject(new Error('Immagine non decodificabile'))},'image/png')}));
 }
+async function imageToJpeg(file, profile){
+ var maxEdge=profile==='compact'?2600:3508;
+ var quality=profile==='compact'?0.82:0.90;
+ var bitmap=await createImageBitmap(file);
+ try {
+  // Never enlarge: preserve small print and avoid unnecessary interpolation.
+  var ratio=Math.min(1,maxEdge/Math.max(bitmap.width,bitmap.height));
+  var width=Math.max(1,Math.round(bitmap.width*ratio));
+  var height=Math.max(1,Math.round(bitmap.height*ratio));
+  var canvas=document.createElement('canvas');
+  canvas.width=width;canvas.height=height;
+  var ctx=canvas.getContext('2d');
+  if(!ctx)throw new Error('Canvas non disponibile');
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height);
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality='high';
+  ctx.drawImage(bitmap,0,0,width,height);
+  var blob=await new Promise(function(resolve,reject){
+   canvas.toBlob(function(b){if(b)resolve(b);else reject(new Error('Compressione JPEG fallita'))},'image/jpeg',quality);
+  });
+  if(blob.type!=='image/jpeg')throw new Error('JPEG non supportato dal browser');
+  return {data:new Uint8Array(await blob.arrayBuffer()),scaled:ratio<1,dimensions:width+'×'+height};
+ } finally {bitmap.close()}
+}
 async function doPDF(result,file){
  var src=await PDFLib.PDFDocument.load(await file.arrayBuffer(),{ignoreEncryption:false});
  var ok=0,failed=0;
@@ -106,9 +143,19 @@ async function doPDF(result,file){
  if(!ok)throw new Error('Nessuna pagina leggibile');
  return {pages:ok,failed:failed};
 }
-async function doImage(result,file){
- var ext=file.name.toLowerCase().split('.').pop(),buf,embedded;
- if(ext==='jpg'||ext==='jpeg'||ext==='jfif') {
+async function doImage(result,file,profile){
+ var ext=file.name.toLowerCase().split('.').pop(),buf,embedded,mode='originale';
+ if(profile!=='original'){
+  var optimized=await imageToJpeg(file,profile);
+  // Avoid an inefficient re-encode if the original JPEG is smaller and did not need resizing.
+  if((ext==='jpg'||ext==='jpeg'||ext==='jfif') && !optimized.scaled && optimized.data.length>=file.size){
+   try{embedded=await result.embedJpg(await file.arrayBuffer());mode='JPEG originale (già ottimizzato)'}
+   catch(e){embedded=await result.embedJpg(optimized.data);mode='JPEG compresso'}
+  } else {
+   embedded=await result.embedJpg(optimized.data);
+   mode='JPEG compresso '+optimized.dimensions+' · '+bytes(optimized.data.length);
+  }
+ } else if(ext==='jpg'||ext==='jpeg'||ext==='jfif') {
    buf=await file.arrayBuffer();
    try{embedded=await result.embedJpg(buf)}catch(e){embedded=await result.embedPng(await imageToPng(file))}
  } else if(ext==='png'){
@@ -121,17 +168,17 @@ async function doImage(result,file){
  var scale=Math.min((pw-36)/w,(ph-36)/h);
  var page=result.addPage([pw,ph]);
  page.drawImage(embedded,{x:(pw-w*scale)/2,y:(ph-h*scale)/2,width:w*scale,height:h*scale});
- return {pages:1,failed:0};
+ return {pages:1,failed:0,mode:mode};
 }
 el('run').onclick=async function(){
  if(running||!selected.length)return;
  if(!window.PDFLib){status('Impossibile caricare la libreria PDF. Verifica la connessione.');return}
  running=true;aborted=false;reports=[];el('report').disabled=true;el('cancel').disabled=false;
- draw();el('log').textContent='';el('progress').value=0;
+ draw();el('log').textContent='';el('progress').value=0;el('savings').textContent='';
  var total=selected.reduce(function(a,x){return a+x.file.size},0);
  if(total>200*1024*1024){log('ATTENZIONE: '+bytes(total)+' selezionati. Il browser potrebbe terminare per memoria insufficiente. Per lotti grandi è preferibile il desktop.')}
  var out=await PDFLib.PDFDocument.create();
- var succeeded=0,skipped=0;
+ var succeeded=0,skipped=0,convertedInputBytes=0,profile=el('profile').value;
  for(var i=0;i<selected.length;i++){
   if(aborted){log('Elaborazione annullata.');break}
   var f=selected[i].file;status('Elaborazione '+(i+1)+'/'+selected.length+': '+f.name);
@@ -140,10 +187,10 @@ el('run').onclick=async function(){
   try{
    var result;
    if(/\.pdf$/i.test(f.name))result=await doPDF(out,f);
-   else if(/\.(jpg|jpeg|jfif|png|webp|bmp|gif|tif|tiff)$/i.test(f.name)||f.type.startsWith('image/'))result=await doImage(out,f);
+   else if(/\.(jpg|jpeg|jfif|png|webp|bmp|gif|tif|tiff)$/i.test(f.name)||f.type.startsWith('image/'))result=await doImage(out,f,profile);
    else throw new Error('Formato non supportato da questa versione web');
-   rec.status='ok';rec.pages=result.pages;rec.note=result.failed?'Pagine saltate: '+result.failed:'';
-   succeeded++;log('  OK: '+rec.pages+' pagine'+(rec.note?' ('+rec.note+')':''));
+   rec.status='ok';rec.pages=result.pages;rec.note=[result.failed?'Pagine saltate: '+result.failed:'',result.mode&&profile!=='original'?result.mode:''].filter(Boolean).join(' · ');
+   succeeded++;convertedInputBytes+=f.size;log('  OK: '+rec.pages+' pagine'+(rec.note?' ('+rec.note+')':''));
   }catch(e){skipped++;rec.note=String(e&&e.message||e).slice(0,250);log('  SALTATO: '+rec.note)}
   reports.push(rec);
   el('progress').value=Math.round((i+1)/selected.length*100);
@@ -154,6 +201,10 @@ el('run').onclick=async function(){
    status('Creazione del PDF finale in corso…');
    var b=await out.save({useObjectStreams:true});
    download(new Blob([b],{type:'application/pdf'}),'merged_universale.pdf');
+   var change=convertedInputBytes?Math.round((1-b.length/convertedInputBytes)*100):0;
+   var comparison='Originali inclusi: '+bytes(convertedInputBytes)+' → PDF: '+bytes(b.length)+' ('+(change>=0?'-':'+')+Math.abs(change)+'%)';
+   el('savings').textContent=comparison;
+   log(comparison+'; i PDF testuali sono stati copiati senza rasterizzazione.');
    log('PDF creato: '+out.getPageCount()+' pagine. '+succeeded+' file riusciti, '+skipped+' saltati.');
    status('Completato. File riusciti: '+succeeded+' · saltati: '+skipped);
   } else {status('Nessun PDF prodotto.');log('Nessuna pagina recuperabile.')}
